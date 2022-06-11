@@ -1,0 +1,24 @@
+type Movement = variant { Blink; NodNod; TurnLeft; TurnRight };
+type TokenError = variant { TokenNotExist; TokenInvalid; TokenExpired };
+type Action = variant { movement: Movement; speech: text };
+
+type Token = record {
+  token : text;
+  action : Action;
+  active : bool;
+  create_at : nat64;
+};
+
+type Result = variant { Ok: bool; Err : TokenError };
+type Result_1 = variant { Ok: Movement; Err : TokenError };
+type Result_2 = variant { Ok: text; Err : TokenError };
+type Result_3 = variant { Ok: Token; Err : TokenError };
+
+service : {
+    "detect_face_start": (text) -> (Result_1);
+    "detect_face_live": (text, Movement) -> (Result);
+    "detect_speech_start": (text) -> (Result_2);
+    "detect_speech_live": (text, text) -> (Result);
+    "is_alive": (text) -> (Result) query;
+    "get_token": () -> (Result_3) query;
+}

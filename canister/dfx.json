@@ -1,0 +1,23 @@
+{
+  "canisters": {
+    "live_detect": {
+      "candid": "src/live_detect/live_detect.did",
+      "package": "live_detect",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "dfx": "0.10.1-nomusl.2",
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
+  },
+  "version": 1
+}

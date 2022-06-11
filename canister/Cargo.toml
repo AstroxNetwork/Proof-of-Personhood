@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "src/live_detect",
+]
+
+[profile.release]
+lto = true
+opt-level = 'z'
