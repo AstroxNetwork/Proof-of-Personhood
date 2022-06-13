@@ -1,10 +1,7 @@
-use std::borrow::BorrowMut;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
 use candid::Principal;
 
 use ic_cdk::{call, caller, trap};
-use ic_cdk::storage::{get, get_mut};
 use ic_cdk_macros::*;
 
 use crate::types::{Action, Movement, Token, TokenError, TokenStore};
@@ -26,7 +23,7 @@ async fn detect_face_start(token: String) -> Result<Movement, TokenError> {
             let movement = Movement::choose(result_tuple.0[0]);
             let tok = Token {
                 token,
-                action: Action::movement(movement.clone()),
+                action: Action::Move(movement.clone()),
                 active: false,
                 create_at: ic_cdk::api::time(),
             };
@@ -60,7 +57,7 @@ fn detect_face_live(token: String, movement: Movement) -> Result<bool, TokenErro
 
                 if tok.action.get_move() == movement {
                     tok.active = true;
-                    //t.borrow_mut().insert(caller(), tok.clone());
+                    tok.create_at = ic_cdk::api::time()
                 }
 
                 Ok(tok.active)
@@ -81,7 +78,7 @@ async fn detect_speech_start(token: String) -> Result<String, TokenError> {
             let speech = result_tuple.0[0].to_string();
             let tok = Token {
                 token,
-                action: Action::speech(speech.clone()),
+                action: Action::Speech(speech.clone()),
                 active: false,
                 create_at: ic_cdk::api::time(),
             };
@@ -114,7 +111,7 @@ fn detect_speech_live(token: String, speech: String) -> Result<bool, TokenError>
 
                 if tok.action.get_speech() == speech {
                     tok.active = true;
-                    //t.borrow_mut().insert(caller(), tok.clone());
+                    tok.create_at = ic_cdk::api::time()
                 }
 
                 Ok(tok.active)

@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 
 use ic_cdk::trap;
 use ic_cdk::export::candid::{CandidType, Deserialize, Principal};
-use serde::de::Unexpected::Option;
-use crate::types::Action::{movement, speech};
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum TokenError {
@@ -15,9 +13,9 @@ pub enum TokenError {
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
 pub enum Movement {
     Blink,
-    NodNod,
-    TurnLeft,
-    TurnRight,
+    Mouth,
+    Shake,
+    Nod,
 }
 
 impl Movement {
@@ -25,9 +23,9 @@ impl Movement {
         let n = Some(seed % 4);
         match n {
             Some(0) => Movement::Blink,
-            Some(1) => Movement::NodNod,
-            Some(2) => Movement::TurnLeft,
-            Some(3) => Movement::TurnRight,
+            Some(1) => Movement::Mouth,
+            Some(2) => Movement::Shake,
+            Some(3) => Movement::Nod,
             _ => trap("choose fail")
         }
     }
@@ -35,17 +33,17 @@ impl Movement {
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum Action {
-    movement(Movement),
-    speech(String),
+    Move(Movement),
+    Speech(String),
 }
 
 impl Action {
     pub fn get_move(&self) -> Movement {
         match self {
-            Action::movement(mv) => {
+            Action::Move(mv) => {
                 mv.clone()
             }
-            Action::speech(sp) => {
+            Action::Speech(_sp) => {
                 trap("must be movement")
             }
         }
@@ -53,10 +51,10 @@ impl Action {
 
     pub fn get_speech(&self) -> String {
         match self {
-            movement(mv) => {
+            Action::Move(_mv) => {
                 trap("must be speech")
             }
-            speech(sp) => {
+            Action::Speech(sp) => {
                 sp.clone()
             }
         }

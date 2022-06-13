@@ -10,7 +10,7 @@ dfx canister call live_detect get_token
 #  },
 #)
 
-dfx canister call live_detect detect_face_start  '("aaa")'
+dfx canister --network ic call live_detect detect_face_start  '("aaa")'
 #(variant { Ok = variant { TurnRight } })
 dfx canister call live_detect detect_face_live  '("aaa", variant { TurnRight })'
 #(variant { Ok = true })

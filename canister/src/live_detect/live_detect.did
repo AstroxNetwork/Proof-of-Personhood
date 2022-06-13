@@ -1,6 +1,6 @@
-type Movement = variant { Blink; NodNod; TurnLeft; TurnRight };
+type Movement = variant { Blink; Mount; Shake; Nod };
 type TokenError = variant { TokenNotExist; TokenInvalid; TokenExpired };
-type Action = variant { movement: Movement; speech: text };
+type Action = variant { Move: Movement; Speech: text };
 
 type Token = record {
   token : text;
