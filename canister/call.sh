@@ -1,4 +1,4 @@
-dfx canister call live_detect get_token
+dfx canister call live_detect get_token '("aaa")'
 #(
 #  variant {
 #    Ok = record {
@@ -10,13 +10,10 @@ dfx canister call live_detect get_token
 #  },
 #)
 
-dfx canister --network ic call live_detect detect_face_start  '("aaa")'
-#(variant { Ok = variant { TurnRight } })
-dfx canister call live_detect detect_face_live  '("aaa", variant { TurnRight })'
-#(variant { Ok = true })
-dfx canister call live_detect detect_speech_start  '("aaa")'
-#(variant { Ok = "30" })
-dfx canister call live_detect detect_speech_live  '("aaa", "30")'
+dfx canister call live_detect detect_start  '("aaa", 0)'
+dfx canister call live_detect detect_start  '("aaa", 1)'
+
+dfx canister call live_detect detect_end  '("aaa", variant { Speech = "4" })'
 #(variant { Ok = true })
 dfx canister call live_detect is_alive '("aaa")'
 #(variant { Ok = true })
