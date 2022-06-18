@@ -104,6 +104,9 @@ a.button {
   color: #1c1d28;
   font-weight: 700;
   margin-top: 36px;
+  &.disabled {
+    background: #9C9CA4;
+  }
 }
 
 .footer {
@@ -121,6 +124,20 @@ a.button {
     width: 460px;
     text-align: left;
 }
+
+.toast {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  .toast-content {
+    background-color: #FF6363;
+    color: #0B0B0F;
+    border-radius: 10px;
+    padding: 4px 30px;
+  }
+}
+
 @keyframes pulse {
   0% {
     transform: scale(0.97);

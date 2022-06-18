@@ -2,8 +2,7 @@ import { Actor, ActorSubclass, HttpAgent, SignIdentity } from "@dfinity/agent";
 import { InterfaceFactory } from "@dfinity/candid/lib/cjs/idl";
 import { idlFactory } from '../candid/live_detect.idl';
 import { _SERVICE } from '../candid/live_detect';
-
-const canisterId = 'gfjra-iaaaa-aaaai-aclia-cai'
+const canisterId = 'gfjra-iaaaa-aaaai-aclia-cai';
 export interface CreateActorResult<T> {
   actor: ActorSubclass<T>;
   agent: HttpAgent;
