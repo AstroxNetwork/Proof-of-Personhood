@@ -28,12 +28,29 @@ impl Movement {
             _ => trap("choose fail")
         }
     }
+
+    pub fn choose3(seed: u8) -> Vec<Movement> {
+        let n = Some(seed % 4);
+        match n {
+            Some(0) => vec![Movement::Blink, Movement::Mouth, Movement::Shake],
+            Some(1) => vec![Movement::Mouth, Movement::Shake, Movement::Nod],
+            Some(2) => vec![Movement::Shake, Movement::Nod, Movement::Blink],
+            Some(3) => vec![Movement::Nod, Movement::Blink, Movement::Mouth],
+            _ => trap("choose fail")
+        }
+    }
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
 pub enum Action {
     Move(Movement),
     Speech(String),
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
+pub struct BatchAction {
+    pub movement: Vec<Movement>,
+    pub speech: String
 }
 
 // impl Action {
