@@ -3,9 +3,11 @@
 **a Sybil-proof identity system powered by decentralized AI human detection**
 
 
-[PoP demo](https://www.youtube.com/embed/aDZQ94zmZg8)
+## Demo
 
+Click here to try: [PoP demo](https://yakuo-miaaa-aaaai-acjfq-cai.ic0.app/)
 
+Watch demo: [PoP demo video](https://www.youtube.com/embed/aDZQ94zmZg8)
 
 ## Inspiration
 
