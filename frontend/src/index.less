@@ -1,12 +1,14 @@
 html, body, div, h1, h2, h3, p, header {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 p {
     line-height: 1.5;
 }
 a {
     cursor: pointer;
+    text-decoration: none;
 }
 body {
   margin: 0;
@@ -49,21 +51,24 @@ a.button {
 .container {
   width: 1080px;
   margin: 0 auto;
+  .connect-button {
+    border: 2px solid #B5FF26;
+    border-radius: 20px;
+    width: 198px;
+    height: 40px;
+    background: none;
+    text-align: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
 }
 .nav-header {
   display: flex;
   justify-content: space-between;
   padding: 45px 0;
-  .connect-button {
-    border: 2px solid #B5FF26;
-    border-radius: 20px;
-    width: 217px;
-    height: 40px;
-    background: none;
-    text-align: center;
-    justify-content: center;
-  }
+
 }
+
 .verify-status {
   display: flex;
   justify-content: center;
@@ -135,6 +140,9 @@ a.button {
     color: #0B0B0F;
     border-radius: 10px;
     padding: 4px 30px;
+    &.toast-content-success {
+      background-color: #00b578;
+    }
   }
 }
 

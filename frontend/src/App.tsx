@@ -8,7 +8,8 @@ import {
 } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 import logo from "./assets/logo.svg"
-import verified from "./assets/verified.png"
+import banner from "./assets/banner.svg"
+import nft from "./assets/116.png"
 import Footer from "./components/Footer"
 import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
@@ -48,11 +49,20 @@ function App() {
     localStorage.getItem(principal?.toString()!) ? true : false,
   )
   const [error, setError] = useState("")
-
-  const params = {
-    principal,
-    host: window.location.hostname,
-    type: 0,
+  const [success, setSuccess] = useState("")
+  let params: any
+  const random = Math.floor(Math.random() * 3)
+  if (random === 2) {
+    params = {
+      principal,
+      host: window.location.hostname,
+    }
+  } else {
+    params = {
+      principal,
+      host: window.location.hostname,
+      type: random,
+    }
   }
 
   useEffect(() => {
@@ -69,7 +79,7 @@ function App() {
       }
     } else {
       console.error("please connect account.")
-      setError("Please connect account.")
+      setError("Please connect a wallet.")
       setTimeout(() => {
         setError("")
       }, 2000)
@@ -107,13 +117,20 @@ function App() {
     //   const result = await connection.actor.detect_end(scope, startResult["Ok"])
     //   console.log(result)
     // }, 4000)
+    clearInterval(timer)
     timer = setInterval(async () => {
       const result: any = await connection.actor.get_token(scope)
       console.log("result", result)
-      if (result.Ok.active) {
+      if (result.Ok && result.Ok.active) {
         //verify
         clearInterval(timer)
         setActive(true)
+        setOpen(false)
+        setMintOpen(true)
+        setSuccess("Verified successfully.")
+        setTimeout(() => {
+          setSuccess("")
+        }, 2000)
       } else {
         setActive(false)
       }
@@ -122,36 +139,51 @@ function App() {
   return (
     <div className="container">
       <header className="nav-header ">
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src={logo} style={{ width: 162, height: 32 }} alt="logo" />
         <div className="flex-1 flex justify-end align-items-center">
-          <ConnectButton />
+          <a className="connect-button" style={{ width: 230 }} href="https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk" target="_blank">
+            Download Demo App
+          </a>
         </div>
       </header>
       <div className="verify-status">
         <div className="flex">
-          <img src={verified} alt="" />
-          <h1>
-            Proof of <br></br>Human
-          </h1>
+          <img src={banner} style={{ width: 540, height: 138 }} alt="" />
         </div>
         <p style={{ marginTop: 36 }}>
           Prove that you’re a real person using blockchain Dapps.
         </p>
-        {principal ? (
-          <>
-            <p className="c_white">Principal ID:  {principal}</p>
-          </>
-        ) : null}
+
         <p></p>
       </div>
       <div className="flex align-items-center">
-        <div className="img" />
+        <p
+          style={{
+            borderRadius: 20,
+            overflow: "hidden",
+            width: 360,
+            height: 360,
+            marginRight: 100,
+          }}
+        >
+          <img src={nft} alt="" style={{ width: 360, height: 360 }} />
+        </p>
         <div className="flex-1">
-          <h1 className="c_white">
-            Prove you’re a real person to mint an mockup NFT.
+          <h1 className="c_white" style={{ marginBottom: 36 }}>
+            Prove you’re a real person to mint a mockup NFT.
           </h1>
+          <div className="flex">
+            <div style={{width: 200}}>
+              <ConnectButton />
+            </div>
+            {principal ? (
+              <>
+                <p className="c_white" style={{marginLeft: 10}}>Principal ID: {principal}</p>
+              </>
+            ) : null}
+          </div>
           <a className="mint-button" onClick={tryMint}>
-            try it now
+            Mint Now
           </a>
         </div>
       </div>
@@ -164,10 +196,11 @@ function App() {
       >
         <div className="modal-content">
           <h1 className="c_white mg_b_10">Scan using ME App</h1>
-          <p style={{ marginBottom: 30 }}>
-            Go to “Settings -&gt; Experiments -&gt; Proof of Human” and click
-            “SCAN” button.
+          <p>
+            1.Go to “Settings -&gt; Experiments -&gt; Proof of Personhood” and
+            then choose "For Dapps".{" "}
           </p>
+          <p style={{ marginBottom: 30 }}>2.Click "Scan" button.</p>
           <div className="flex justify-center">
             <div
               style={{
@@ -202,9 +235,24 @@ function App() {
           },
         }}
       >
-        <div className="img"></div>
-        <h1 className="c_white">Verified!</h1>
-        <p>You can mint a mockup NFT now.</p>
+        <p
+          style={{
+            textAlign: "center",
+            width: 360,
+            height: 360,
+            marginBottom: 20,
+            overflow: "hidden",
+            borderRadius: 20,
+          }}
+        >
+          <img src={nft} alt="" style={{ width: 360, height: 360 }} />
+        </p>
+        <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
+        <p>
+          {minted
+            ? "You have minted a mockup NFT."
+            : "You can mint a mockup NFT now."}
+        </p>
         <a
           onClick={mint}
           className={`mint-button ${loading ? "disabled" : ""}`}
@@ -212,8 +260,15 @@ function App() {
           {loading ? "Minting…" : minted ? "Close" : "Mint"}
         </a>
       </Modal>
-      <div className="toast" style={{ display: error ? "block" : "none" }}>
-        <div className="toast-content">{error}</div>
+      <div
+        className="toast"
+        style={{ display: error || success ? "block" : "none" }}
+      >
+        <div
+          className={`toast-content ${success ? "toast-content-success" : ""}`}
+        >
+          {error || success}
+        </div>
       </div>
       <ConnectDialog />
     </div>
@@ -230,7 +285,7 @@ export default () => (
     /*
      * List of providers
      */
-    providers={[AstroX, InternetIdentity]}
+    providers={[InternetIdentity, AstroX]}
   >
     <App />
   </Connect2ICProvider>

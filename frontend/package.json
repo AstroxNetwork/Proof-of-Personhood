@@ -5,6 +5,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "serve": "vite preview",
+    "dfx:deploy:production": "./scripts/deploy_production.sh",
     "gen:live_detect:types": "didc bind ./canister/src/live_detect/live_detect.did -t ts > ./frontend/candid/live_detect.d.ts",
     "gen:live_detect:js": "didc bind ./canister/src/live_detect/live_detect.did -t js > ./frontend/candid/live_detect.idl.js"
   },
