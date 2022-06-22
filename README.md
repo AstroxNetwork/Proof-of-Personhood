@@ -3,10 +3,15 @@ A Sybil-proof identity system powered by decentralized AI human detection
 
 ## Demo
 Click here to try: 
-[Demo website](https://yakuo-miaaa-aaaai-acjfq-cai.ic0.app/)
-[Demo App](https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk)
 
-Watch demo: [PoP demo video](https://www.youtube.com/watch?v=PemI8YYMzpc)
+[Open Demo website](https://yakuo-miaaa-aaaai-acjfq-cai.ic0.app/)
+
+[Download Demo App](https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk)
+
+Watch demo: 
+
+[PoP demo video](https://www.youtube.com/watch?v=PemI8YYMzpc)
+
 
 ## Inspiration
 One of the most challenging Web3 issues is known as the Sybil attack.  A Sybil attack is when a malicious user leverages multiple crypto wallets and/or web2 social media identity to gain multiple positions with an unfair advantage of systems.
