@@ -2,7 +2,9 @@
 A Sybil-proof identity system powered by decentralized AI human detection
 
 ## Demo
-Click here to try: [PoP demo](https://yakuo-miaaa-aaaai-acjfq-cai.ic0.app/)
+Click here to try: 
+[Demo website](https://yakuo-miaaa-aaaai-acjfq-cai.ic0.app/)
+[Demo App](https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk)
 
 Watch demo: [PoP demo video](https://www.youtube.com/watch?v=PemI8YYMzpc)
 
