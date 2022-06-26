@@ -1,7 +1,7 @@
 {
   "canisters": {
     "live_detect": {
-      "candid": "src/live_detect/live_detect.did",
+      "candid": "live_detect.did",
       "package": "live_detect",
       "type": "rust"
     }

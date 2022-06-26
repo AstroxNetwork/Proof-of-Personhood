@@ -1,0 +1,31 @@
+type Action = variant { Move : Movement; Speech : text };
+type BatchAction = record { movement : vec Movement; speech : text };
+type Movement = variant { Nod; Shake; Blink; Mouth };
+type Result = variant { Ok : Action; Err : TokenError };
+type Result_1 = variant { Ok : bool; Err : TokenError };
+type Result_2 = variant { Ok : BatchAction; Err : TokenError };
+type Result_3 = variant { Ok : nat32; Err : TokenError };
+type Result_4 = variant { Ok : Token; Err : TokenError };
+type Token = record {
+  action : Action;
+  active : bool;
+  create_at : nat64;
+  scope : text;
+};
+type TokenError = variant {
+  CallerNotExist;
+  SecretError;
+  TokenExpired;
+  CallError;
+  TokenNotExist;
+  TokenInvalid;
+};
+service : {
+  approve : (text, nat8) -> (Result);
+  detect_batch_end : (text) -> (Result_1);
+  detect_batch_start : (text) -> (Result_2);
+  detect_end : (text, Action) -> (Result_1);
+  detect_secret_end : (text, text, principal) -> (Result_3);
+  get_token : (text) -> (Result_4) query;
+  is_alive : (text) -> (Result_1) query;
+}

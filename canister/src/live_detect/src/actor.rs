@@ -2,10 +2,11 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap};
 use candid::Principal;
 
+use candid::{candid_method};
 use ic_cdk::{call, caller, trap};
 use ic_cdk_macros::*;
 
-use crate::types::{Action, BatchAction, Movement, Token, TokenError};
+use crate::types::{Action, BatchAction, Movement, Token, TokenError, TokenIndex};
 use crate::types::Action::Speech;
 
 // const SECOND_UNIT: u64 = 1_000_000_000;
@@ -16,7 +17,8 @@ thread_local! {
     static ACCOUNT_TOKENS: RefCell<TokenStore> = RefCell::default();
 }
 
-#[update]
+#[update(name = "approve")]
+#[candid_method(update, rename = "approve")]
 async fn detect_start(scope: String, action_type: u8) -> Result<Action, TokenError> {
     let caller = caller();
 
@@ -65,7 +67,8 @@ async fn detect_start(scope: String, action_type: u8) -> Result<Action, TokenErr
     })
 }
 
-#[update]
+#[update(name = "detect_end")]
+#[candid_method(update, rename = "detect_end")]
 fn detect_end(scope: String, action: Action) -> Result<bool, TokenError> {
     let caller = caller();
     ACCOUNT_TOKENS.with(|t| {
@@ -87,7 +90,8 @@ fn detect_end(scope: String, action: Action) -> Result<bool, TokenError> {
     })
 }
 
-#[update]
+#[update(name = "detect_batch_start")]
+#[candid_method(update, rename = "detect_batch_start")]
 async fn detect_batch_start(scope: String) -> Result<BatchAction, TokenError> {
     let caller = caller();
 
@@ -130,8 +134,9 @@ async fn detect_batch_start(scope: String) -> Result<BatchAction, TokenError> {
 
 }
 
-#[update]
-fn detect_batch_end(scope: String) -> Result<bool, TokenError> {
+#[update(name = "detect_batch_end")]
+#[candid_method(update, rename = "detect_batch_end")]
+fn detect_batch_end(scope: String, ) -> Result<bool, TokenError> {
     let caller = caller();
     ACCOUNT_TOKENS.with(|t| {
         let mut map = t.borrow_mut();
@@ -141,7 +146,7 @@ fn detect_batch_end(scope: String) -> Result<bool, TokenError> {
                     Some(mut tok) => {
                         tok.active = true;
                         Ok(tok.active)
-                    }
+                    },
                     None => Err(TokenError::TokenNotExist)
                 }
             }
@@ -150,7 +155,50 @@ fn detect_batch_end(scope: String) -> Result<bool, TokenError> {
     })
 }
 
-#[query]
+#[update(name = "detect_secret_end")]
+#[candid_method(update, rename = "detect_secret_end")]
+async fn detect_secret_end(scope: String, secret: String, nft_canister: Principal) -> Result<TokenIndex, TokenError> {
+    let caller = caller();
+    if secret != "AstroXtodamoon" {
+        return Err(TokenError::SecretError)
+    }
+
+    let result = ACCOUNT_TOKENS.with(|t| {
+        let mut map = t.borrow_mut();
+        match map.get_mut(&caller) {
+            Some(tokens) => {
+                match tokens.get_mut(&scope) {
+                    Some(mut tok) => {
+                        tok.active = true;
+                        Ok(tok.active)
+                    },
+                    None => Err(TokenError::TokenNotExist)
+                }
+            }
+            None => Err(TokenError::CallerNotExist)
+        }
+    });
+    match result {
+        Ok(_) => {
+            let cb = call(
+                nft_canister,
+                "claimNFT",
+                (
+                    caller,
+                )
+            ).await as Result<(TokenIndex,), _>;
+            ic_cdk::println!("{:?}", cb);
+            match cb {
+                Ok(res) => Ok(res.0),
+                Err(_) => Err(TokenError::CallError)
+            }
+        }
+        Err(e) => Err(e)
+    }
+}
+
+#[query(name = "is_alive")]
+#[candid_method(query, rename = "is_alive")]
 fn is_alive(scope: String) -> Result<bool, TokenError> {
     ACCOUNT_TOKENS.with(|t| {
         let map = t.borrow();
@@ -166,7 +214,8 @@ fn is_alive(scope: String) -> Result<bool, TokenError> {
     })
 }
 
-#[query]
+#[query(name = "get_token")]
+#[candid_method(query, rename = "get_token")]
 async fn get_token(scope: String) -> Result<Token, TokenError> {
     ACCOUNT_TOKENS.with(|t| {
         let map = t.borrow();

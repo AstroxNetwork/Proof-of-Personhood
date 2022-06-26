@@ -9,6 +9,10 @@ edition = "2018"
 path = "src/lib.rs"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "live_detect"
+path = "src/lib.rs"
+
 [dependencies]
 candid = "0.7.10"
 ic-cdk = "0.4"

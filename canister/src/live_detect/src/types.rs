@@ -7,6 +7,8 @@ pub enum TokenError {
     TokenNotExist,
     TokenInvalid,
     TokenExpired,
+    SecretError,
+    CallError,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
@@ -53,28 +55,21 @@ pub struct BatchAction {
     pub speech: String
 }
 
-// impl Action {
-//     pub fn get_move(&self) -> Movement {
-//         match self {
-//             Action::Move(mv) => {
-//                 mv.clone()
-//             }
-//             Action::Speech(_sp) => {
-//                 trap("must be movement")
-//             }
-//         }
-//     }
+pub type TokenIndex = u32;
+// pub type AccountIdentifier=String;
+
+// #[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
+// pub enum User {
+//     #[serde(rename = "principal")]
+//     Principal(Principal),
+//     #[serde(rename = "address")]
+//     Address(AccountIdentifier),
+// }
 //
-//     pub fn get_speech(&self) -> String {
-//         match self {
-//             Action::Move(_mv) => {
-//                 trap("must be speech")
-//             }
-//             Action::Speech(sp) => {
-//                 sp.clone()
-//             }
-//         }
-//     }
+// #[derive(Clone, Debug, CandidType, Deserialize, Eq, PartialEq)]
+// pub struct MintRequest {
+//     pub to: User,
+//     pub metadata: Option<Vec<u8>>,
 // }
 
 #[derive(CandidType, Deserialize, Clone, Debug)]
