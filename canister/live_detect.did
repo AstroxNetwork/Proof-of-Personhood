@@ -25,9 +25,11 @@ service : (principal) -> {
   detect_batch_end : (text) -> (Result);
   detect_batch_start : (text) -> (Result_1);
   detect_end : (text, Action) -> (Result);
-  detect_secret_end : (text) -> (Result_2);
+  detect_secret_end : (principal, text) -> (Result_2);
   detect_start : (text, nat8) -> (Result_3);
+  get_nft : () -> (principal) query;
   get_token : (text) -> (Result_4) query;
   is_alive : (text) -> (Result) query;
+  is_manager : (principal) -> (bool) query;
   set_nft : (principal) -> ();
 }
