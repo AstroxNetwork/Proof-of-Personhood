@@ -21,7 +21,7 @@ dfx canister call live_detect detect_end  '("aaa", variant { Speech = "4" })'
 
 dfx canister call live_detect detect_batch_start  '("aaa")'
 dfx canister call live_detect detect_batch_end  '("aaa")'
-dfx canister call live_detect detect_secret_end  '("aaa")'
+dfx canister call live_detect detect_secret_end  '(principal "caller"; "aaa")'
 
 dfx canister call live_detect is_alive '("aaa")'
 dfx canister call live_detect get_token '("aaa")'

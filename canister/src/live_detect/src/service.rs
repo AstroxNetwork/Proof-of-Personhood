@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap};
 use ic_cdk::caller;
 use ic_types::Principal;
+use crate::state::LiveStorage;
 use crate::types::*;
 
 thread_local! {
@@ -12,6 +13,16 @@ pub struct LiveService {
     pub manager: HashMap<Principal, String>,
     pub nft_canister: Principal,
     pub tokens: HashMap<Principal, BTreeMap<String, Token>>,
+}
+
+impl From<&LiveStorage> for LiveService {
+    fn from(s: &LiveStorage) -> Self {
+        LiveService {
+            manager: s.manager.clone(),
+            nft_canister: s.nft_canister.clone(),
+            tokens: s.tokens.clone(),
+        }
+    }
 }
 
 impl LiveService {

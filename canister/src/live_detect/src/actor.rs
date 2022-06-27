@@ -186,8 +186,7 @@ fn detect_batch_end(scope: String) -> Result<bool, TokenError> {
 
 #[update(name = "detect_secret_end", guard = "manager_guard")]
 #[candid_method(update, rename = "detect_secret_end")]
-async fn detect_secret_end(scope: String) -> Result<TokenIndex, TokenError> {
-    let caller = caller();
+async fn detect_secret_end(caller: Principal, scope: String) -> Result<TokenIndex, TokenError> {
     let result = SERVICE.with(|t| {
         let mut map = t.borrow_mut();
         map.set_active(caller, scope)
