@@ -1,24 +1,65 @@
-use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap};
 use candid::Principal;
 
 use candid::{candid_method};
 use ic_cdk::{call, caller, trap};
 use ic_cdk_macros::*;
+use crate::service::{SERVICE, manager_guard};
 
-use crate::types::{Action, BatchAction, Movement, Token, TokenError, TokenIndex};
+use crate::types::*;
 use crate::types::Action::Speech;
 
 // const SECOND_UNIT: u64 = 1_000_000_000;
 
-type TokenStore = HashMap<Principal, BTreeMap<String, Token>>;
+// type TokenStore = HashMap<Principal, BTreeMap<String, Token>>;
+//
+// thread_local! {
+//     static ACCOUNT_TOKENS: RefCell<TokenStore> = RefCell::default();
+// }
 
-thread_local! {
-    static ACCOUNT_TOKENS: RefCell<TokenStore> = RefCell::default();
+#[init]
+#[candid_method(init)]
+fn init(manager: Principal) {
+    SERVICE.with(|serv| {
+        let mut service = serv.borrow_mut();
+        service.init_manager(manager);
+    });
 }
 
-#[update(name = "approve")]
-#[candid_method(update, rename = "approve")]
+#[update(name = "add_manager", guard = "manager_guard")]
+#[candid_method(update, rename = "add_manager")]
+fn add_manager(manager: Principal) {
+    SERVICE.with(|serv| {
+        serv.borrow_mut().init_manager(manager)
+    });
+}
+
+#[query(name = "is_manager", guard = "manager_guard")]
+#[candid_method(query, rename = "is_manager")]
+fn is_manager(principal: Principal) -> bool {
+    SERVICE.with(|ext| {
+        ext.borrow().is_manager(principal)
+    })
+}
+
+#[update(name = "set_nft", guard = "manager_guard")]
+#[candid_method(update, rename = "set_nft")]
+fn set_nft(nft: Principal) {
+    SERVICE.with(|serv| {
+        serv.borrow_mut().nft_canister = nft
+    });
+}
+
+#[query(name = "get_nft", guard = "manager_guard")]
+#[candid_method(query, rename = "get_nft")]
+fn get_nft() -> Principal {
+    SERVICE.with(|ext| {
+        ext.borrow().nft_canister
+    })
+}
+
+#[update(name = "detect_start")]
+#[candid_method(update, rename = "detect_start")]
 async fn detect_start(scope: String, action_type: u8) -> Result<Action, TokenError> {
     let caller = caller();
 
@@ -32,13 +73,13 @@ async fn detect_start(scope: String, action_type: u8) -> Result<Action, TokenErr
     }).0;
 
     // tokens map
-    ACCOUNT_TOKENS.with(|t| {
+    SERVICE.with(|t| {
         let mut tt = t.borrow_mut();
-        let tokens = match tt.get_mut(&caller) {
+        let tokens = match tt.tokens.get_mut(&caller) {
             Some(map) => map,
             None => {
-                tt.insert(caller,  BTreeMap::new());
-                tt.get_mut(&caller).unwrap()
+                tt.tokens.insert(caller,  BTreeMap::new());
+                tt.tokens.get_mut(&caller).unwrap()
             }
         };
 
@@ -71,9 +112,9 @@ async fn detect_start(scope: String, action_type: u8) -> Result<Action, TokenErr
 #[candid_method(update, rename = "detect_end")]
 fn detect_end(scope: String, action: Action) -> Result<bool, TokenError> {
     let caller = caller();
-    ACCOUNT_TOKENS.with(|t| {
+    SERVICE.with(|t| {
         let mut map = t.borrow_mut();
-        match map.get_mut(&caller) {
+        match map.tokens.get_mut(&caller) {
             Some(tokens) => {
                 match tokens.get_mut(&scope) {
                     Some(mut tok) => {
@@ -104,13 +145,13 @@ async fn detect_batch_start(scope: String) -> Result<BatchAction, TokenError> {
         trap(&format!("call management canister random number error: {:?}", e));
     }).0;
 
-    ACCOUNT_TOKENS.with(|t| {
+    SERVICE.with(|t| {
         let mut tt = t.borrow_mut();
-        let tokens = match tt.get_mut(&caller) {
+        let tokens = match tt.tokens.get_mut(&caller) {
             Some(map) => map,
             None => {
-                tt.insert(caller, BTreeMap::new());
-                tt.get_mut(&caller).unwrap()
+                tt.tokens.insert(caller, BTreeMap::new());
+                tt.tokens.get_mut(&caller).unwrap()
             }
         };
 
@@ -136,50 +177,25 @@ async fn detect_batch_start(scope: String) -> Result<BatchAction, TokenError> {
 
 #[update(name = "detect_batch_end")]
 #[candid_method(update, rename = "detect_batch_end")]
-fn detect_batch_end(scope: String, ) -> Result<bool, TokenError> {
-    let caller = caller();
-    ACCOUNT_TOKENS.with(|t| {
+fn detect_batch_end(scope: String) -> Result<bool, TokenError> {
+    SERVICE.with(|t| {
         let mut map = t.borrow_mut();
-        match map.get_mut(&caller) {
-            Some(tokens) => {
-                match tokens.get_mut(&scope) {
-                    Some(mut tok) => {
-                        tok.active = true;
-                        Ok(tok.active)
-                    },
-                    None => Err(TokenError::TokenNotExist)
-                }
-            }
-            None => Err(TokenError::CallerNotExist)
-        }
+        map.set_active(caller(), scope)
     })
 }
 
-#[update(name = "detect_secret_end")]
+#[update(name = "detect_secret_end", guard = "manager_guard")]
 #[candid_method(update, rename = "detect_secret_end")]
-async fn detect_secret_end(scope: String, secret: String, nft_canister: Principal) -> Result<TokenIndex, TokenError> {
+async fn detect_secret_end(scope: String) -> Result<TokenIndex, TokenError> {
     let caller = caller();
-    if secret != "AstroXtodamoon" {
-        return Err(TokenError::SecretError)
-    }
-
-    let result = ACCOUNT_TOKENS.with(|t| {
+    let result = SERVICE.with(|t| {
         let mut map = t.borrow_mut();
-        match map.get_mut(&caller) {
-            Some(tokens) => {
-                match tokens.get_mut(&scope) {
-                    Some(mut tok) => {
-                        tok.active = true;
-                        Ok(tok.active)
-                    },
-                    None => Err(TokenError::TokenNotExist)
-                }
-            }
-            None => Err(TokenError::CallerNotExist)
-        }
+        map.set_active(caller, scope)
     });
+
     match result {
         Ok(_) => {
+            let nft_canister = SERVICE.with(|t| t.borrow().nft_canister);
             let cb = call(
                 nft_canister,
                 "claimNFT",
@@ -200,9 +216,9 @@ async fn detect_secret_end(scope: String, secret: String, nft_canister: Principa
 #[query(name = "is_alive")]
 #[candid_method(query, rename = "is_alive")]
 fn is_alive(scope: String) -> Result<bool, TokenError> {
-    ACCOUNT_TOKENS.with(|t| {
+    SERVICE.with(|t| {
         let map = t.borrow();
-        match map.get(&caller()) {
+        match map.tokens.get(&caller()) {
             Some(tokens) => {
                 match tokens.get(&scope) {
                     Some(tok) => Ok(tok.active),
@@ -217,9 +233,9 @@ fn is_alive(scope: String) -> Result<bool, TokenError> {
 #[query(name = "get_token")]
 #[candid_method(query, rename = "get_token")]
 async fn get_token(scope: String) -> Result<Token, TokenError> {
-    ACCOUNT_TOKENS.with(|t| {
+    SERVICE.with(|t| {
         let map = t.borrow();
-        match map.get(&caller()) {
+        match map.tokens.get(&caller()) {
             Some(tokens) => {
                 match tokens.get(&scope) {
                     Some(tok) => Ok(tok.clone()),
