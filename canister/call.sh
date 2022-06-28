@@ -23,14 +23,13 @@ dfx deploy --network ic --wallet t35f6-tiaaa-aaaai-acewq-cai --with-cycles 10000
 
 dfx canister --network ic call live_detect add_manager '(principal "myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae")'
 dfx canister --network ic call live_detect is_manager '(principal "myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae")'
-dfx canister --network ic call live_detect detect_secret_end '(principal "myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae", "aaa")'
+dfx canister --network ic call live_detect claimNFT '(principal "myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae")'
 # myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae
 # didf6-xaaaa-aaaai-acmjq-cai
 dfx canister --network ic call live_detect set_nft '(principal "didf6-xaaaa-aaaai-acmjq-cai")'
-dfx canister --network ic call live_detect get_nft
+dfx canister --network ic call live_detect set_nft '(principal "didf6-xaaaa-aaaai-acmjq-cai")'
 
-dfx canister --network ic call live_detect detect_batch_start  '("aaa")'
-dfx canister --network ic call live_detect detect_batch_end  '("aaa")'
+dfx canister --network ic call live_detect get_nft
 
 
 dfx canister --network ic call live_detect is_alive '("aaa")'

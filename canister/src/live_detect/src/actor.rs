@@ -94,8 +94,8 @@ fn detect_end(scope: String) -> Result<bool, TokenError> {
     })
 }
 
-#[update(name = "claimNft")]
-#[candid_method(update, rename = "claimNft")]
+#[update(name = "claimNFT")]
+#[candid_method(update, rename = "claimNFT")]
 async fn claim_nft(principal: Principal) -> Result<TokenIndex, TokenError> {
     let result = SERVICE.with(|t| { t.borrow().is_user_active(principal) });
     match result {
