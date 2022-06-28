@@ -4,7 +4,6 @@ import { idlFactory } from '../candid/live_detect.idl';
 import { _SERVICE } from '../candid/live_detect';
 import { idlFactory as NFT_idlFactory  } from '../candid/pop_nft.idl';
 import { _SERVICE as NFT_SERVICE } from '../candid/pop_nft.did';
-const canisterId = 'gfjra-iaaaa-aaaai-aclia-cai';
 export interface CreateActorResult<T> {
   actor: ActorSubclass<T>;
   agent: HttpAgent;
@@ -33,8 +32,7 @@ export async function _createActor<T>(
 export async function getActor<T>(interfaceFactory: InterfaceFactory, canisterId: string, identity?: SignIdentity) {
   return await _createActor<T>(interfaceFactory, canisterId, identity)
 }
-console.log(process.env)
-console.log(process.env.LIVE_DETECT_CANISTER_ID)
-console.log(process.env.POP_NFT_CANISTER_ID)
+// @ts-ignore
 export const popConnection = async (identity: SignIdentity) =>  (await getActor<_SERVICE>(idlFactory, process.env.LIVE_DETECT_CANISTER_ID, identity));
+// @ts-ignore
 export const popNFTConnection = async (identity: SignIdentity) =>  (await getActor<NFT_SERVICE>(NFT_idlFactory, process.env.POP_NFT_CANISTER_ID, identity));

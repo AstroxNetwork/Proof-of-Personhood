@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext",
+    "typeRoots": ["node_modules/@types"],
     "lib": [
       "DOM",
       "DOM.Iterable",
@@ -21,13 +22,14 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
       "canisters/counter": [
         ".dfx/local/canisters/counter"
       ]
     }
   },
+  "exclude": ["./src/utils"],
   "include": [
     "./src",
     "typings.d.ts"

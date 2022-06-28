@@ -6,8 +6,8 @@
     "build": "tsc && vite build",
     "serve": "vite preview",
     "dfx:deploy:production": "./scripts/deploy_production.sh",
-    "gen:live_detect:types": "didc bind ./canister/src/live_detect/live_detect.did -t ts > ./frontend/candid/live_detect.d.ts",
-    "gen:live_detect:js": "didc bind ./canister/src/live_detect/live_detect.did -t js > ./frontend/candid/live_detect.idl.js"
+    "gen:live_detect:types": "didc bind ../canister/live_detect.did -t ts > ./src/candid/live_detect.d.ts",
+    "gen:live_detect:js": "didc bind ../canister/live_detect.did -t js > ./src/candid/live_detect.idl.js"
   },
   "dependencies": {
     "@connect2ic/core": "0.0.9",
@@ -19,6 +19,8 @@
     "@dfinity/identity": "0.10.0",
     "@dfinity/principal": "0.10.0",
     "@rollup/plugin-dynamic-import-vars": "^1.4.3",
+    "buffer-crc32": "^0.2.13",
+    "crypto-js": "^4.1.1",
     "qrcode.react": "^3.0.2",
     "querystring": "^0.2.1",
     "react": "^17.0.2",
@@ -26,6 +28,7 @@
     "react-modal": "^3.15.1"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
     "@types/node": "^16.11.41",
     "@types/react": "^17.0.20",
     "@types/react-dom": "^17.0.9",

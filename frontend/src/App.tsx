@@ -17,7 +17,7 @@ import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
 import Modal from "react-modal"
 import { popConnection, popNFTConnection } from "./service/connection"
-import { delay } from "./utils"
+import { delay, getAccountId, hasOwnProperty } from "./utils"
 import { SignIdentity } from "@dfinity/agent"
 import { Principal } from "@dfinity/principal"
 
@@ -58,19 +58,9 @@ function App() {
   const [success, setSuccess] = useState("")
 
   console.log(provider)
-  let params: any
-  const random = Math.floor(Math.random() * 3)
-  if (random === 2) {
-    params = {
-      principal,
-      host: window.location.hostname,
-    }
-  } else {
-    params = {
-      principal,
-      host: window.location.hostname,
-      type: random,
-    }
+  const params = {
+    principal,
+    host: window.location.hostname,
   }
 
   useEffect(() => {
@@ -78,10 +68,14 @@ function App() {
       const img = new Image()
       img.src = minting
       console.log("principal", principal)
+      // @ts-ignore
       const curIdentity =  activeProvider?.connector.client._identity;
       setIdentity(curIdentity);
       getNFTTokens(curIdentity);
       checkHumanStatus(curIdentity);
+      console.log('principal', curIdentity.getPrincipal())
+      console.log('accountId', getAccountId(curIdentity.getPrincipal()))
+      console.log('accountId', getAccountId(curIdentity.getPrincipal()).length)
     }
   }, [principal])
 
@@ -103,23 +97,27 @@ function App() {
 
   const mint = async () => {
     if (minted) return setMintOpen(false)
-    if (loading) return
+    if (loading || !identity) return
     localStorage.setItem(principal?.toString()!, "1")
     setLoading(true)
-    delay(2000)
-    // const result: any = await (await popConnection(identity!)).actor.()
+    console.log(identity.getPrincipal())
+    const result: any = await (await popConnection(identity)).actor.claimNFT(identity.getPrincipal())
+    console.log(result)
     setLoading(false)
     setMinted(true)
   }
 
   const getNFTTokens = async (identity: SignIdentity) => {
-    const result: any = await (await popNFTConnection(identity!)).actor.account_id(identity.getPrincipal());
-    console.log(result);
-    const tokensResult: any = await (await popNFTConnection(identity!)).actor.tokens(result)
-    console.log()
-    const nftDataResult: any = await (await popNFTConnection(identity!)).actor.tokens(tokensResult)
+    const tokensResult: any = await (await popNFTConnection(identity!)).actor.tokens(getAccountId(identity.getPrincipal()))
+    console.log('token result', tokensResult)
+    if( hasOwnProperty(tokensResult, 'Ok')) {
+      if(tokensResult['Ok'].length > 0) {
+        const nftDataResult: any = await (await popNFTConnection(identity!)).actor.metadata(tokensResult['Ok'][0])
+        console.log(nftDataResult)
+      }
+    }
+    
   }
-
   const transferNFT = async () => {
     const result: any = await (await popNFTConnection(identity!)).actor.transfer({
       to: {
@@ -128,7 +126,7 @@ function App() {
       from: {
         principal: Principal.fromText(principal!)
       },
-      token:'',
+      token: '',
       memo: [],
       subaccount: [],
       amount: 1
@@ -342,7 +340,7 @@ export default () => (
     /*
      * List of providers
      */
-    providers={[InternetIdentity]}
+    providers={[InternetIdentity, AstroX]}
   >
     <App />
   </Connect2ICProvider>
