@@ -5,17 +5,21 @@ import {
   ConnectDialog,
   Connect2ICProvider,
   useConnect,
+  useProviders,
 } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 import logo from "./assets/logo.svg"
 import banner from "./assets/banner.svg"
+import minting from "./assets/mint.gif"
 import nft from "./assets/116.png"
 import Footer from "./components/Footer"
 import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
 import Modal from "react-modal"
-import { connection } from "./service/connection"
+import { popConnection, popNFTConnection } from "./service/connection"
 import { delay } from "./utils"
+import { SignIdentity } from "@dfinity/agent"
+import { Principal } from "@dfinity/principal"
 
 const customStyles = {
   overlay: {
@@ -44,12 +48,16 @@ function App() {
   const [mintOpen, setMintOpen] = useState(false)
   const [active, setActive] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { principal, isConnected } = useConnect()
+  const { principal, activeProvider, isConnected } = useConnect()
+  const provider = useProviders()
+  const [identity, setIdentity] = useState<SignIdentity>()
   const [minted, setMinted] = useState(
     localStorage.getItem(principal?.toString()!) ? true : false,
   )
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+
+  console.log(provider)
   let params: any
   const random = Math.floor(Math.random() * 3)
   if (random === 2) {
@@ -66,8 +74,15 @@ function App() {
   }
 
   useEffect(() => {
-    checkHumanStatus()
-    console.log("principal", principal)
+    if(isConnected) {
+      const img = new Image()
+      img.src = minting
+      console.log("principal", principal)
+      const curIdentity =  activeProvider?.connector.client._identity;
+      setIdentity(curIdentity);
+      getNFTTokens(curIdentity);
+      checkHumanStatus(curIdentity);
+    }
   }, [principal])
 
   const tryMint = () => {
@@ -86,19 +101,45 @@ function App() {
     }
   }
 
-  const mint = () => {
+  const mint = async () => {
     if (minted) return setMintOpen(false)
     if (loading) return
     localStorage.setItem(principal?.toString()!, "1")
     setLoading(true)
     delay(2000)
+    // const result: any = await (await popConnection(identity!)).actor.()
     setLoading(false)
     setMinted(true)
   }
 
-  const checkHumanStatus = async () => {
+  const getNFTTokens = async (identity: SignIdentity) => {
+    const result: any = await (await popNFTConnection(identity!)).actor.account_id(identity.getPrincipal());
+    console.log(result);
+    const tokensResult: any = await (await popNFTConnection(identity!)).actor.tokens(result)
+    console.log()
+    const nftDataResult: any = await (await popNFTConnection(identity!)).actor.tokens(tokensResult)
+  }
+
+  const transferNFT = async () => {
+    const result: any = await (await popNFTConnection(identity!)).actor.transfer({
+      to: {
+        principal: Principal.fromText('')
+      },
+      from: {
+        principal: Principal.fromText(principal!)
+      },
+      token:'',
+      memo: [],
+      subaccount: [],
+      amount: 1
+    })
+    console.log(result);
+  }
+
+  const checkHumanStatus = async (identity: SignIdentity) => {
     const scope = prefix + qs.stringify(params)
-    const result: any = await connection.actor.get_token(scope)
+    console.log('popConnection', await popConnection(identity!))
+    const result: any = await (await popConnection(identity!)).actor.get_token(scope)
     console.log("result", result)
     if (result.Ok && result.Ok.active) {
       clearInterval(timer)
@@ -119,7 +160,7 @@ function App() {
     // }, 4000)
     clearInterval(timer)
     timer = setInterval(async () => {
-      const result: any = await connection.actor.get_token(scope)
+      const result: any = await (await popConnection(identity!)).actor.get_token(scope)
       console.log("result", result)
       if (result.Ok && result.Ok.active) {
         //verify
@@ -141,7 +182,12 @@ function App() {
       <header className="nav-header ">
         <img src={logo} style={{ width: 162, height: 32 }} alt="logo" />
         <div className="flex-1 flex justify-end align-items-center">
-          <a className="connect-button" style={{ width: 230 }} href="https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk" target="_blank">
+          <a
+            className="connect-button"
+            style={{ width: 230 }}
+            href="https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk"
+            target="_blank"
+          >
             Download Demo App
           </a>
         </div>
@@ -166,19 +212,25 @@ function App() {
             marginRight: 100,
           }}
         >
-          <img src={nft} alt="" style={{ width: 360, height: 360 }} />
+          <img
+            src={minted ? nft : minting}
+            alt=""
+            style={{ width: 360, height: 360 }}
+          />
         </p>
         <div className="flex-1">
           <h1 className="c_white" style={{ marginBottom: 36 }}>
-            Prove you’re a real person to mint a mockup NFT.
+            Prove you’re a real person to mint a <strong>MOCKUP</strong> NFT.
           </h1>
           <div className="flex">
-            <div style={{width: 200}}>
+            <div style={{ width: 200 }}>
               <ConnectButton />
             </div>
             {principal ? (
               <>
-                <p className="c_white" style={{marginLeft: 10}}>Principal ID: {principal}</p>
+                <p className="c_white" style={{ marginLeft: 10 }}>
+                  Principal ID: {principal}
+                </p>
               </>
             ) : null}
           </div>
@@ -245,14 +297,19 @@ function App() {
             borderRadius: 20,
           }}
         >
-          <img src={nft} alt="" style={{ width: 360, height: 360 }} />
+          <img
+            src={minted ? nft : minting}
+            alt=""
+            style={{ width: 360, height: 360 }}
+          />
         </p>
         <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
-        <p>
-          {minted
-            ? "You have minted a mockup NFT."
-            : "You can mint a mockup NFT now."}
-        </p>
+
+        {minted ? (
+          <p>You have minted a <strong>MOCKUP</strong> NFT.</p>
+        ) : (
+          <p>You can mint a <strong>MOCKUP</strong> NFT now.</p>
+        )}
         <a
           onClick={mint}
           className={`mint-button ${loading ? "disabled" : ""}`}
@@ -285,7 +342,7 @@ export default () => (
     /*
      * List of providers
      */
-    providers={[InternetIdentity, AstroX]}
+    providers={[InternetIdentity]}
   >
     <App />
   </Connect2ICProvider>
