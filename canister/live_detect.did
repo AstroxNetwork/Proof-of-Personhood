@@ -22,13 +22,13 @@ type TokenError = variant {
 };
 service : (principal) -> {
   add_manager : (principal) -> ();
-  claimNFT : (principal) -> (Result);
+  claimNFT : (principal, text) -> (Result);
   detect_end : (text) -> (Result_1);
   detect_start : (text) -> (Result_2);
-  get_nft : () -> (principal) query;
+  get_nft_canister : () -> (principal) query;
   get_token : (text) -> (Result_3) query;
   is_alive : (text) -> (Result_1) query;
   is_manager : (principal) -> (bool) query;
-  is_user_alive : (principal) -> (Result_1) query;
-  set_nft : (principal) -> ();
+  is_user_alive : (principal, text) -> (Result_1) query;
+  set_nft_canister : (principal) -> ();
 }

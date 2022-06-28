@@ -20,7 +20,7 @@ impl From<&LiveStorage> for LiveService {
         LiveService {
             manager: s.manager.clone(),
             nft_canister: s.nft_canister.clone(),
-            tokens: HashMap::default(),
+            tokens: s.tokens.clone(),
         }
     }
 }
@@ -61,8 +61,8 @@ impl LiveService {
         }
     }
 
-    pub fn is_user_active(&self, principal: Principal) -> Result<bool, TokenError> {
-        let scope  = format!("astrox://human?principal={}&host=astrox.me", principal.to_string());
+    pub fn is_user_active(&self, principal: Principal, host: String) -> Result<bool, TokenError> {
+        let scope  = format!("astrox://human?principal={}&host={}", principal.to_string(), host);
         match self.tokens.get(&scope) {
             Some(mut tok) => {
                 Ok(tok.active)

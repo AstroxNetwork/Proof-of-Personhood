@@ -9,14 +9,6 @@ use crate::service::{SERVICE, manager_guard};
 
 use crate::types::*;
 
-// const SECOND_UNIT: u64 = 1_000_000_000;
-
-// type TokenStore = HashMap<Principal, BTreeMap<String, Token>>;
-//
-// thread_local! {
-//     static ACCOUNT_TOKENS: RefCell<TokenStore> = RefCell::default();
-// }
-
 #[init]
 #[candid_method(init)]
 fn init(manager: Principal) {
@@ -42,17 +34,17 @@ fn is_manager(principal: Principal) -> bool {
     })
 }
 
-#[update(name = "set_nft", guard = "manager_guard")]
-#[candid_method(update, rename = "set_nft")]
-fn set_nft(nft: Principal) {
+#[update(name = "set_nft_canister", guard = "manager_guard")]
+#[candid_method(update, rename = "set_nft_canister")]
+fn set_nft_canister(nft: Principal) {
     SERVICE.with(|serv| {
         serv.borrow_mut().nft_canister = nft
     });
 }
 
-#[query(name = "get_nft", guard = "manager_guard")]
-#[candid_method(query, rename = "get_nft")]
-fn get_nft() -> Principal {
+#[query(name = "get_nft_canister", guard = "manager_guard")]
+#[candid_method(query, rename = "get_nft_canister")]
+fn get_nft_canister() -> Principal {
     SERVICE.with(|ext| {
         ext.borrow().nft_canister
     })
@@ -74,13 +66,17 @@ async fn detect_start(scope: String) -> Result<BatchAction, TokenError> {
         let movement = Movement::choose3(rands[0]);
         let speech = rands[0].to_string();
         let batch = BatchAction { movement, speech: speech.clone() };
-        let tok = Token {
-            scope: scope.clone(),
-            action: Action::Speech(speech),
-            active: false,
-            create_at: ic_cdk::api::time(),
-        };
-        t.borrow_mut().tokens.insert(scope.clone(), tok);
+        let mut tt = t.borrow_mut();
+        if !tt.tokens.contains_key(&scope.clone()) {
+            let tok = Token {
+                scope: scope.clone(),
+                action: Action::Speech(speech),
+                active: false,
+                create_at: ic_cdk::api::time(),
+            };
+            tt.tokens.insert(scope, tok);
+        }
+
         Ok(batch)
     })
 
@@ -96,8 +92,8 @@ fn detect_end(scope: String) -> Result<bool, TokenError> {
 
 #[update(name = "claimNFT")]
 #[candid_method(update, rename = "claimNFT")]
-async fn claim_nft(principal: Principal) -> Result<TokenIndex, TokenError> {
-    let result = SERVICE.with(|t| { t.borrow().is_user_active(principal) });
+async fn claim_nft(principal: Principal, host: String) -> Result<TokenIndex, TokenError> {
+    let result = SERVICE.with(|t| { t.borrow().is_user_active(principal, host) });
     match result {
         Ok(active) => {
             if active {
@@ -124,9 +120,9 @@ async fn claim_nft(principal: Principal) -> Result<TokenIndex, TokenError> {
 
 #[query(name = "is_user_alive")]
 #[candid_method(query, rename = "is_user_alive")]
-fn is_user_alive(principal: Principal) -> Result<bool, TokenError> {
+fn is_user_alive(principal: Principal, host: String) -> Result<bool, TokenError> {
     SERVICE.with(|t| {
-        t.borrow().is_user_active(principal)
+        t.borrow().is_user_active(principal, host)
     })
 }
 
