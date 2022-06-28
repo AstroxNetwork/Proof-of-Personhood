@@ -12,7 +12,7 @@ thread_local! {
 pub struct LiveService {
     pub manager: HashMap<Principal, String>,
     pub nft_canister: Principal,
-    pub tokens: HashMap<Principal, BTreeMap<String, Token>>,
+    pub tokens: HashMap<String, Token>,
 }
 
 impl From<&LiveStorage> for LiveService {
@@ -20,7 +20,7 @@ impl From<&LiveStorage> for LiveService {
         LiveService {
             manager: s.manager.clone(),
             nft_canister: s.nft_canister.clone(),
-            tokens: s.tokens.clone(),
+            tokens: HashMap::default(),
         }
     }
 }
@@ -42,18 +42,32 @@ impl LiveService {
         self.manager.contains_key(&caller)
     }
 
-    pub fn set_active(&mut self, caller: Principal, scope: String) -> Result<bool, TokenError> {
-        match self.tokens.get_mut(&caller) {
-            Some(tokens) => {
-                match tokens.get_mut(&scope) {
-                    Some(mut tok) => {
-                        tok.active = true;
-                        Ok(tok.active)
-                    },
-                    None => Err(TokenError::TokenNotExist)
-                }
-            }
-            None => Err(TokenError::CallerNotExist)
+    pub fn set_active(&mut self, scope: String) -> Result<bool, TokenError> {
+        match self.tokens.get_mut(&scope) {
+            Some(mut tok) => {
+                tok.active = true;
+                Ok(tok.active)
+            },
+            None => Err(TokenError::TokenNotExist)
+        }
+    }
+
+    pub fn is_active(&self, scope: String) -> Result<bool, TokenError> {
+        match self.tokens.get(&scope) {
+            Some(mut tok) => {
+                Ok(tok.active)
+            },
+            None => Err(TokenError::TokenNotExist)
+        }
+    }
+
+    pub fn is_user_active(&self, principal: Principal) -> Result<bool, TokenError> {
+        let scope  = format!("astrox://human?principal={}&host=astrox.me", principal.to_string());
+        match self.tokens.get(&scope) {
+            Some(mut tok) => {
+                Ok(tok.active)
+            },
+            None => Err(TokenError::TokenNotExist)
         }
     }
 }

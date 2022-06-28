@@ -9,6 +9,7 @@ pub enum TokenError {
     TokenExpired,
     SecretError,
     CallError,
+    TokenNotActive,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]

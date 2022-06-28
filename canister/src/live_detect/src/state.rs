@@ -13,7 +13,6 @@ use crate::types::*;
 pub(crate) struct LiveStorage {
     pub manager: HashMap<Principal, String>,
     pub nft_canister: Principal,
-    pub tokens: HashMap<Principal, BTreeMap<String, Token>>,
 }
 
 #[pre_upgrade]
@@ -24,7 +23,6 @@ pub fn pre_upgrade() {
             (LiveStorage {
                 manager: s.manager.clone(),
                 nft_canister: s.nft_canister.clone(),
-                tokens: s.tokens.clone(),
             },)
         })
     }) {
