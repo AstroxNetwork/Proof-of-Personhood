@@ -31,15 +31,19 @@ export const idlFactory = ({ IDL }) => {
   const Result_3 = IDL.Variant({ 'Ok' : Token, 'Err' : TokenError });
   return IDL.Service({
     'add_manager' : IDL.Func([IDL.Principal], [], []),
-    'claimNFT' : IDL.Func([IDL.Principal], [Result], []),
+    'claimNFT' : IDL.Func([IDL.Principal, IDL.Text], [Result], []),
     'detect_end' : IDL.Func([IDL.Text], [Result_1], []),
     'detect_start' : IDL.Func([IDL.Text], [Result_2], []),
-    'get_nft' : IDL.Func([], [IDL.Principal], ['query']),
+    'get_nft_canister' : IDL.Func([], [IDL.Principal], ['query']),
     'get_token' : IDL.Func([IDL.Text], [Result_3], ['query']),
     'is_alive' : IDL.Func([IDL.Text], [Result_1], ['query']),
     'is_manager' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
-    'is_user_alive' : IDL.Func([IDL.Principal], [Result_1], ['query']),
-    'set_nft' : IDL.Func([IDL.Principal], [], []),
+    'is_user_alive' : IDL.Func(
+        [IDL.Principal, IDL.Text],
+        [Result_1],
+        ['query'],
+      ),
+    'set_nft_canister' : IDL.Func([IDL.Principal], [], []),
   });
 };
 export const init = ({ IDL }) => { return [IDL.Principal]; };

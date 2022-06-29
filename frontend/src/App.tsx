@@ -12,14 +12,23 @@ import logo from "./assets/logo.svg"
 import banner from "./assets/banner.svg"
 import minting from "./assets/mint.gif"
 import nft from "./assets/116.png"
+import back from "./assets/back.png"
 import Footer from "./components/Footer"
 import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
 import Modal from "react-modal"
 import { popConnection, popNFTConnection } from "./service/connection"
-import { delay, getAccountId, hasOwnProperty } from "./utils"
+import {
+  bytesToBase64,
+  delay,
+  getAccountId,
+  getTokenIdentifier,
+  hasOwnProperty,
+  validatePrincipalId,
+} from "./utils"
 import { SignIdentity } from "@dfinity/agent"
 import { Principal } from "@dfinity/principal"
+import { createClient } from "@connect2ic/core"
 
 const customStyles = {
   overlay: {
@@ -42,6 +51,233 @@ let timer: number | undefined
 
 const prefix = "astrox://human?"
 
+type TransferProps = {
+  nftImg: string
+  close: () => void
+  identity: SignIdentity
+  fromPrincipal: string
+  tokenIdentifier: string
+}
+const Transfer: React.FC<TransferProps> = (props) => {
+  const { nftImg, identity, fromPrincipal, tokenIdentifier, close } = props
+  const [step, setStep] = useState<"main" | "transfer" | "success">("main")
+  const [disabled, setDisabled] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [value, setValue] = useState<string>("")
+  const [error, setError] = useState("")
+
+  const checkFormat = (value: string) => {
+    if (validatePrincipalId(value)) {
+      setDisabled(false)
+      setError("")
+    } else {
+      setDisabled(true)
+      setError("Principal Id is not valid.")
+    }
+  }
+
+  const transferNFT = async (to: string) => {
+    console.log("to====", to)
+    console.log(identity)
+    try {
+      setLoading(true)
+      const result: any = await (
+        await popNFTConnection(identity!)
+      ).actor.transfer({
+        to: {
+          principal: Principal.fromText(to),
+        },
+        from: {
+          principal: Principal.fromText(fromPrincipal!),
+        },
+        token: tokenIdentifier,
+        memo: [],
+        subaccount: [],
+        amount: 1,
+      })
+      setLoading(false)
+      console.log(result)
+      setStep("success")
+    } catch (error) {
+      setLoading(false)
+      console.error(error)
+    }
+  }
+
+  if (step === "success") {
+    return (
+      <div>
+        <p
+          style={{
+            textAlign: "center",
+            width: 360,
+            height: 360,
+            marginLeft: "auto",
+            marginRight: "auto",
+            marginBottom: 20,
+            overflow: "hidden",
+            borderRadius: 20,
+          }}
+        >
+          <img
+            src={`data:image/png;base64,${nftImg}`}
+            alt=""
+            style={{ width: 360, height: 360 }}
+          />
+        </p>
+        <h1 className="mg_t_20 c_white">Success!</h1>
+        <p className="c_white">
+          You have transferred your PoP NFT to the following wallet. PoP NFT can
+          be traded on Yumi now.
+        </p>
+        <p>
+          <a className="button mg_t_30">{value}</a>
+        </p>
+        <a className="mint-button mg_t_30" onClick={close}>
+          Close
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex" style={{ maxWidth: 900, textAlign: "left" }}>
+      <div className="flex-1">
+        <p
+          style={{
+            textAlign: "center",
+            width: 360,
+            height: 360,
+            marginBottom: 20,
+            overflow: "hidden",
+            borderRadius: 20,
+          }}
+        >
+          <img
+            src={`data:image/png;base64,${nftImg}`}
+            alt=""
+            style={{ width: 360, height: 360 }}
+          />
+        </p>
+        <h1
+          className="c_white mg_t_20"
+          style={{ fontSize: 46, textAlign: "left" }}
+        >
+          PoP NFT<br></br> Minted
+        </h1>
+        <p>You have minted and can trade PoP NFT on Yumi marketplace.</p>
+      </div>
+      <div className="flex-1">
+        <div className="card">
+          {step === "main" ? (
+            <>
+              <h2 className="c_white">Steps before trading your NFT</h2>
+              <h2 className="mg_t_30" style={{ fontSize: 30 }}>
+                1.
+              </h2>
+              <h2 className="c_white">
+                Log into{" "}
+                <a className="c_brand" href="https://yumi.io" target="_blank">
+                  Yumi
+                </a>
+              </h2>
+              <p>
+                <a
+                  href="https://yumi.io"
+                  style={{ color: "#9C9CA4", textDecoration: "underline" }}
+                  target="_blank"
+                >
+                  https://yumi.io
+                </a>
+              </p>
+              <h2 className="mg_t_30" style={{ fontSize: 30 }}>
+                2.
+              </h2>
+              <h2 className="c_white">Click Profile</h2>
+              <p>
+                Click your avatar on the top right corner and click “Profile”.
+              </p>
+              <h2 className="mg_t_30" style={{ fontSize: 30 }}>
+                3.
+              </h2>
+              <h2 className="c_white">Copy Account ID</h2>
+              <p>Copy “Account ID” in the Profile page.</p>
+              <div
+                className="flex"
+                style={{
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  marginTop: 50,
+                }}
+              >
+                <a className="button" onClick={close}>
+                  Close
+                </a>
+                <a onClick={() => setStep("transfer")} className="mint-button">
+                  I have logged into Yumi
+                </a>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex" style={{ alignItems: "center" }}>
+                <img
+                  src={back}
+                  alt=""
+                  style={{ width: 30, height: 30, marginRight: 10 }}
+                  onClick={() => setStep("main")}
+                />
+                <div className="flex-1">
+                  <h1 className="c_white">Transfer PoP NFT</h1>
+                </div>
+              </div>
+
+              <p>
+                PoP NFT is now supported by Yumi marketplace. Please transfer
+                your PoP NFT to your wallet that you used to log into Yumi.
+              </p>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Enter Principal ID"
+                  onChange={(e) => {
+                    setValue(e.target.value)
+                    checkFormat(e.target.value)
+                  }}
+                />
+                {error ? (
+                  <p className="mg_t_10" style={{ color: "#FF6363" }}>
+                    {error}
+                  </p>
+                ) : null}
+              </div>
+              <div
+                className="flex"
+                style={{
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  marginTop: 290,
+                }}
+              >
+                <a className="button" onClick={close}>
+                  Close
+                </a>
+                <button
+                  onClick={() => transferNFT(value!)}
+                  disabled={disabled || loading}
+                  className="mint-button"
+                >
+                  {loading ? "Transferring..." : "Transfer"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [link, setLink] = useState("")
   const [open, setOpen] = useState(false)
@@ -51,9 +287,9 @@ function App() {
   const { principal, activeProvider, isConnected } = useConnect()
   const provider = useProviders()
   const [identity, setIdentity] = useState<SignIdentity>()
-  const [minted, setMinted] = useState(
-    localStorage.getItem(principal?.toString()!) ? true : false,
-  )
+  const [minted, setMinted] = useState(false)
+  const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
+  const [nftImg, setNftImg] = useState<string>()
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
@@ -64,18 +300,17 @@ function App() {
   }
 
   useEffect(() => {
-    if(isConnected) {
+    if (isConnected) {
       const img = new Image()
       img.src = minting
-      console.log("principal", principal)
+      console.log(activeProvider)
       // @ts-ignore
-      const curIdentity =  activeProvider?.connector.client._identity;
-      setIdentity(curIdentity);
-      getNFTTokens(curIdentity);
-      checkHumanStatus(curIdentity);
-      console.log('principal', curIdentity.getPrincipal())
-      console.log('accountId', getAccountId(curIdentity.getPrincipal()))
-      console.log('accountId', getAccountId(curIdentity.getPrincipal()).length)
+      const curIdentity =
+        activeProvider?.identity ??
+        activeProvider?.client._identity
+      setIdentity(curIdentity)
+      checkHumanStatus(curIdentity)
+      getNFTTokens(curIdentity)
     }
   }, [principal])
 
@@ -101,43 +336,74 @@ function App() {
     localStorage.setItem(principal?.toString()!, "1")
     setLoading(true)
     console.log(identity.getPrincipal())
-    const result: any = await (await popConnection(identity)).actor.claimNFT(identity.getPrincipal())
-    console.log(result)
-    setLoading(false)
-    setMinted(true)
+    try {
+      const result: any = await (
+        await popConnection(identity)
+      ).actor.claimNFT(identity.getPrincipal(), window.location.hostname)
+      console.log(result)
+      getMetaDataByTokenIndex(result["Ok"])
+    } catch (error) {
+      setError("You have minted a PoP NFT.")
+      setTimeout(() => {
+        setError("")
+        setMintOpen(false)
+      }, 2500)
+    }
   }
 
   const getNFTTokens = async (identity: SignIdentity) => {
-    const tokensResult: any = await (await popNFTConnection(identity!)).actor.tokens(getAccountId(identity.getPrincipal()))
-    console.log('token result', tokensResult)
-    if( hasOwnProperty(tokensResult, 'Ok')) {
-      if(tokensResult['Ok'].length > 0) {
-        const nftDataResult: any = await (await popNFTConnection(identity!)).actor.metadata(tokensResult['Ok'][0])
-        console.log(nftDataResult)
+    const tokensResult: any = await (
+      await popNFTConnection(identity!)
+    ).actor.tokens(getAccountId(identity.getPrincipal()))
+    console.log("token result", tokensResult)
+    // setLoading(true)
+    if (hasOwnProperty(tokensResult, "Ok")) {
+      if (tokensResult["Ok"].length > 0) {
+        console.log(tokensResult["Ok"][0])
+        getMetaDataByTokenIndex(tokensResult["Ok"][0])
       }
+    } else {
+      setLoading(false)
     }
-    
   }
-  const transferNFT = async () => {
-    const result: any = await (await popNFTConnection(identity!)).actor.transfer({
-      to: {
-        principal: Principal.fromText('')
-      },
-      from: {
-        principal: Principal.fromText(principal!)
-      },
-      token: '',
-      memo: [],
-      subaccount: [],
-      amount: 1
-    })
-    console.log(result);
+
+  const getMetaDataByTokenIndex = async (tokenIndex: number) => {
+    const tokenIdentifier: any = getTokenIdentifier(
+      // @ts-ignore
+      process.env.POP_NFT_CANISTER_ID,
+      tokenIndex,
+    )
+    console.log("tokenIdentifier", tokenIdentifier)
+    setTokenIdentifier(tokenIdentifier)
+    const nftDataResult: any = await (
+      await popNFTConnection(identity!)
+    ).actor.metadata(tokenIdentifier)
+    console.log(nftDataResult)
+    if (hasOwnProperty(nftDataResult, "Ok")) {
+      const metadata = nftDataResult["Ok"]["nonfungible"]["metadata"][0]
+      console.log(metadata)
+      // const b64encoded = btoa(
+      //   new TextDecoder("utf8").decode(new Uint8Array(metadata)),
+      // )
+      const b64encoded = new TextDecoder("utf8").decode(
+        new Uint8Array(metadata),
+      )
+      // const b64encoded = bytesToBase64(metadata)
+      console.log(b64encoded)
+      setNftImg(b64encoded)
+      setMinted(true)
+      setLoading(false)
+    } else {
+      setLoading(false)
+    }
   }
 
   const checkHumanStatus = async (identity: SignIdentity) => {
     const scope = prefix + qs.stringify(params)
-    console.log('popConnection', await popConnection(identity!))
-    const result: any = await (await popConnection(identity!)).actor.get_token(scope)
+    console.log("popConnection", await popConnection(identity!))
+    const result: any = await (
+      await popConnection(identity!)
+    ).actor.get_token(scope)
     console.log("result", result)
     if (result.Ok && result.Ok.active) {
       clearInterval(timer)
@@ -158,7 +424,9 @@ function App() {
     // }, 4000)
     clearInterval(timer)
     timer = setInterval(async () => {
-      const result: any = await (await popConnection(identity!)).actor.get_token(scope)
+      const result: any = await (
+        await popConnection(identity!)
+      ).actor.get_token(scope)
       console.log("result", result)
       if (result.Ok && result.Ok.active) {
         //verify
@@ -175,6 +443,7 @@ function App() {
       }
     }, 2000)
   }
+  console.log(minted)
   return (
     <div className="container">
       <header className="nav-header ">
@@ -197,7 +466,6 @@ function App() {
         <p style={{ marginTop: 36 }}>
           Prove that you’re a real person using blockchain Dapps.
         </p>
-
         <p></p>
       </div>
       <div className="flex align-items-center">
@@ -211,14 +479,14 @@ function App() {
           }}
         >
           <img
-            src={minted ? nft : minting}
-            alt=""
             style={{ width: 360, height: 360 }}
+            src={minted ? `data:image/png;base64,${nftImg}` : minting}
           />
+          {/* <image href={`data:image/png;charset=utf-8;base64, ${nftImg}`} width="360" height="360"/> */}
         </p>
         <div className="flex-1">
           <h1 className="c_white" style={{ marginBottom: 36 }}>
-            Prove you’re a real person to mint a <strong>MOCKUP</strong> NFT.
+            Prove you’re a real person to mint a <strong>PoP</strong> NFT.
           </h1>
           <div className="flex">
             <div style={{ width: 200 }}>
@@ -232,9 +500,9 @@ function App() {
               </>
             ) : null}
           </div>
-          <a className="mint-button" onClick={tryMint}>
+          <button className="mint-button" disabled={loading} onClick={tryMint}>
             Mint Now
-          </a>
+          </button>
         </div>
       </div>
       <Footer />
@@ -275,7 +543,6 @@ function App() {
       <Modal
         ariaHideApp={false}
         isOpen={mintOpen}
-        contentLabel="Example Modal"
         style={{
           ...customStyles,
           content: {
@@ -285,35 +552,51 @@ function App() {
           },
         }}
       >
-        <p
-          style={{
-            textAlign: "center",
-            width: 360,
-            height: 360,
-            marginBottom: 20,
-            overflow: "hidden",
-            borderRadius: 20,
-          }}
-        >
-          <img
-            src={minted ? nft : minting}
-            alt=""
-            style={{ width: 360, height: 360 }}
-          />
-        </p>
-        <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
-
         {minted ? (
-          <p>You have minted a <strong>MOCKUP</strong> NFT.</p>
+          <Transfer
+            close={() => setMintOpen(false)}
+            nftImg={nftImg!}
+            fromPrincipal={principal!}
+            tokenIdentifier={tokenIdentifier}
+            identity={identity!}
+          />
         ) : (
-          <p>You can mint a <strong>MOCKUP</strong> NFT now.</p>
+          <>
+            <p
+              style={{
+                textAlign: "center",
+                width: 360,
+                height: 360,
+                marginBottom: 20,
+                overflow: "hidden",
+                borderRadius: 20,
+              }}
+            >
+              <img
+                src={minted ? `data:image/png;base64,${nftImg}` : minting}
+                alt=""
+                style={{ width: 360, height: 360 }}
+              />
+            </p>
+            <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
+
+            {minted ? (
+              <p>
+                You have minted a <strong>PoP</strong> NFT.
+              </p>
+            ) : (
+              <p>
+                You can mint a <strong>PoP</strong> NFT now.
+              </p>
+            )}
+            <a
+              onClick={mint}
+              className={`mint-button ${loading ? "disabled" : ""}`}
+            >
+              {loading ? "Minting..." : minted ? "Close" : "Mint"}
+            </a>
+          </>
         )}
-        <a
-          onClick={mint}
-          className={`mint-button ${loading ? "disabled" : ""}`}
-        >
-          {loading ? "Minting…" : minted ? "Close" : "Mint"}
-        </a>
       </Modal>
       <div
         className="toast"
@@ -330,17 +613,24 @@ function App() {
   )
 }
 
+const client = createClient({
+  providers: [new InternetIdentity(), new AstroX({
+    providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app"
+  })],
+  canisters: {},
+  globalProviderConfig: {}
+})
+
 export default () => (
   <Connect2ICProvider
     /*
      * Disables dev mode in production
      * Should be enabled when using local canisters
      */
-    dev={import.meta.env.DEV}
     /*
      * List of providers
      */
-    providers={[InternetIdentity, AstroX]}
+    client={client}
   >
     <App />
   </Connect2ICProvider>

@@ -31,13 +31,13 @@ export type TokenError = { 'CallerNotExist' : null } |
   { 'TokenInvalid' : null };
 export interface _SERVICE {
   'add_manager' : ActorMethod<[Principal], undefined>,
-  'claimNFT' : ActorMethod<[Principal], Result>,
+  'claimNFT' : ActorMethod<[Principal, string], Result>,
   'detect_end' : ActorMethod<[string], Result_1>,
   'detect_start' : ActorMethod<[string], Result_2>,
-  'get_nft' : ActorMethod<[], Principal>,
+  'get_nft_canister' : ActorMethod<[], Principal>,
   'get_token' : ActorMethod<[string], Result_3>,
   'is_alive' : ActorMethod<[string], Result_1>,
   'is_manager' : ActorMethod<[Principal], boolean>,
-  'is_user_alive' : ActorMethod<[Principal], Result_1>,
-  'set_nft' : ActorMethod<[Principal], undefined>,
+  'is_user_alive' : ActorMethod<[Principal, string], Result_1>,
+  'set_nft_canister' : ActorMethod<[Principal], undefined>,
 }

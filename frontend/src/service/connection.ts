@@ -21,6 +21,7 @@ export async function _createActor<T>(
   if (NODE_ENV !== 'production') {
     await agent.fetchRootKey();
   }
+  console.log('agent', agent)
   const actor = Actor.createActor<T>(interfaceFactory, {
     agent,
     canisterId,

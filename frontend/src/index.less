@@ -29,6 +29,11 @@ a.button {
     margin-top: 40px;
     margin-left: auto;
     margin-right: auto;
+    border: 1px solid #B5FF26;
+    padding: 0 20px;
+    line-height: 38px;
+    height: 38px;
+    border-radius: 20px;
 }
 .flex {
   display: flex;
@@ -48,6 +53,10 @@ a.button {
 .c_white {
   color: #ffffff;
 }
+.c_brand {
+  color: #B5FF26;
+}
+
 .container {
   width: 1080px;
   margin: 0 auto;
@@ -100,6 +109,7 @@ a.button {
 .mint-button {
   background: #b5ff26;
   border-radius: 20px;
+  border: 0;
   width: 198px;
   height: 40px;
   display: inline-block;
@@ -111,6 +121,10 @@ a.button {
   margin-top: 36px;
   &.disabled {
     background: #9C9CA4;
+  }
+  &:disabled {
+    background-color: #5D5D6C;
+    color: #1c1d28;
   }
 }
 
@@ -135,6 +149,7 @@ a.button {
   top: 40%;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 9999;
   .toast-content {
     background-color: #FF6363;
     color: #0B0B0F;
@@ -143,6 +158,30 @@ a.button {
     &.toast-content-success {
       background-color: #00b578;
     }
+  }
+}
+.card {
+  background-color: #23232F;
+  padding: 30px 60px;
+  text-align: left;
+  border-radius: 10px;
+  input {
+    background-color: #15151D;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 20px;
+    border-radius: 20px;
+    width: 100%;
+    border: 0;
+    margin-top: 40px;
+    outline: none;
+    color: #fff;
+    &::placeholder {
+      color: #9C9CA4;
+    }
+  }
+  button {
+    border: 0;
   }
 }
 
@@ -171,4 +210,20 @@ a.button {
 
 .mg_t_10 {
     margin-top: 10px;
+}
+
+.mg_b_20 {
+  margin-bottom: 20px;
+}
+
+.mg_t_20 {
+  margin-top: 20px;
+}
+
+.mg_b_30 {
+  margin-bottom: 30px;
+}
+
+.mg_t_30 {
+  margin-top: 30px;
 }
