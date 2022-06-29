@@ -1,10 +1,10 @@
 use std::borrow::BorrowMut;
 use std::collections::{BTreeMap};
-use candid::Principal;
 
 use candid::{candid_method};
 use ic_cdk::{call, caller, trap};
 use ic_cdk_macros::*;
+use ic_types::Principal;
 use crate::service::{SERVICE, manager_guard};
 
 use crate::types::*;
@@ -46,7 +46,7 @@ fn set_nft_canister(nft: Principal) {
 #[candid_method(query, rename = "get_nft_canister")]
 fn get_nft_canister() -> Principal {
     SERVICE.with(|ext| {
-        ext.borrow().nft_canister
+        ext.borrow().nft_canister.clone()
     })
 }
 
@@ -93,22 +93,23 @@ fn detect_end(scope: String) -> Result<bool, TokenError> {
 #[update(name = "claimNFT")]
 #[candid_method(update, rename = "claimNFT")]
 async fn claim_nft(principal: Principal, host: String) -> Result<TokenIndex, TokenError> {
-    let result = SERVICE.with(|t| { t.borrow().is_user_active(principal, host) });
+    let result = SERVICE.with(|t| { t.borrow().is_user_active(principal.clone(), host) });
     match result {
         Ok(active) => {
             if active {
-                let nft_canister = SERVICE.with(|t| t.borrow().nft_canister);
+                let nft_canister = SERVICE.with(|ext| { ext.borrow().nft_canister.clone() });
+                // let nft_canister = Principal::from_text(nft_canister_address).unwrap();
                 let cb = call(
                     nft_canister,
                     "claimNFT",
                     (
-                        principal,
+                        principal.clone(),
                     )
                 ).await as Result<(TokenIndex,), _>;
-                ic_cdk::println!("{:?}", cb);
+                // ic_cdk::println!("{:?}", cb);
                 match cb {
                     Ok(res) => Ok(res.0),
-                    Err(_) => Err(TokenError::CallError)
+                    Err(e) => trap(format!("{:?}", e).as_str())
                 }
             } else {
                 Err(TokenError::TokenNotActive)

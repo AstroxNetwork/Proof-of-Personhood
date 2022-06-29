@@ -63,6 +63,7 @@ impl LiveService {
 
     pub fn is_user_active(&self, principal: Principal, host: String) -> Result<bool, TokenError> {
         let scope  = format!("astrox://human?principal={}&host={}", principal.to_string(), host);
+        // ic_cdk::println!("{:?}", scope);
         match self.tokens.get(&scope) {
             Some(mut tok) => {
                 Ok(tok.active)
