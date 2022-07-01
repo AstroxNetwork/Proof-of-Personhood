@@ -15,13 +15,11 @@ export async function _createActor<T>(
   identity?: SignIdentity,
   host?: string,
 ): Promise<CreateActorResult<T>> {
-  console.log('ENV', NODE_ENV)
   const agent = new HttpAgent({ identity, host: NODE_ENV !== 'production' ? 'http://localhost:8000' : 'https://ic0.app' });
   // Only fetch the root key when we're not in prod
   if (NODE_ENV !== 'production') {
     await agent.fetchRootKey();
   }
-  console.log('agent', agent)
   const actor = Actor.createActor<T>(interfaceFactory, {
     agent,
     canisterId,

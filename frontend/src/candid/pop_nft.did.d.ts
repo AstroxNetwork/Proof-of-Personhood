@@ -36,12 +36,15 @@ export type Result = { 'Ok' : number } |
   { 'Err' : CommonError };
 export type Result_1 = { 'Ok' : string } |
   { 'Err' : CommonError };
-export type Result_2 = { 'Ok' : Metadata } |
+export type Result_2 = { 'Ok' : TokenObj } |
+  { 'Err' : string };
+export type Result_3 = { 'Ok' : Metadata } |
   { 'Err' : CommonError };
-export type Result_3 = { 'Ok' : Array<number> } |
+export type Result_4 = { 'Ok' : Array<number> } |
   { 'Err' : CommonError };
-export type Result_4 = { 'Ok' : number } |
+export type Result_5 = { 'Ok' : number } |
   { 'Err' : TransferError };
+export interface TokenObj { 'canister' : Array<number>, 'index' : number }
 export type TransferError = { 'CannotNotify' : string } |
   { 'InsufficientBalance' : number } |
   { 'InvalidToken' : string } |
@@ -67,27 +70,31 @@ export interface _SERVICE {
   'balance' : ActorMethod<[BalanceRequest], Result>,
   'batchMintNFT' : ActorMethod<[Array<MintRequest>], Array<number>>,
   'bearer' : ActorMethod<[string], Result_1>,
-  'claimNFT' : ActorMethod<[MintRequest], number>,
-  'claim_count' : ActorMethod<[], Result>,
+  'canister_id' : ActorMethod<[], Principal>,
+  'claimNFT' : ActorMethod<[Principal], number>,
   'claim_supply' : ActorMethod<[], Result>,
+  'decode_id' : ActorMethod<[string], Result_2>,
   'extensions' : ActorMethod<[], Array<string>>,
   'force_claim_reserve' : ActorMethod<[ClaimRequest], number>,
   'getAllowances' : ActorMethod<[], Array<[number, Principal]>>,
   'getMinter' : ActorMethod<[], Principal>,
   'getRegistry' : ActorMethod<[], Array<[number, string]>>,
-  'getTokens' : ActorMethod<[], Array<[number, Metadata]>>,
+  'getTokens' : ActorMethod<[number], Array<[number, Metadata]>>,
   'getTokensByIds' : ActorMethod<[Array<number>], Array<[number, Metadata]>>,
   'init_reserve' : ActorMethod<[number], undefined>,
+  'is_claimable' : ActorMethod<[Principal], boolean>,
   'is_manager' : ActorMethod<[Principal], boolean>,
-  'metadata' : ActorMethod<[string], Result_2>,
+  'is_principal' : ActorMethod<[string], boolean>,
+  'metadata' : ActorMethod<[string], Result_3>,
   'mintNFT' : ActorMethod<[MintRequest], number>,
-  'pop_info' : ActorMethod<[], Info>,
+  'next_claim_id' : ActorMethod<[], Result>,
+  'pop_status' : ActorMethod<[], Info>,
   'reserve_tokens' : ActorMethod<[], Array<number>>,
   'setMinter' : ActorMethod<[Principal], undefined>,
   'set_claim_supply' : ActorMethod<[number], undefined>,
   'supply' : ActorMethod<[string], Result>,
   'test' : ActorMethod<[], User>,
   'token_id' : ActorMethod<[number], string>,
-  'tokens' : ActorMethod<[string], Result_3>,
-  'transfer' : ActorMethod<[TransferRequest], Result_4>,
+  'tokens' : ActorMethod<[string], Result_4>,
+  'transfer' : ActorMethod<[TransferRequest], Result_5>,
 }

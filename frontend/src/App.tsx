@@ -29,6 +29,7 @@ import {
 import { SignIdentity } from "@dfinity/agent"
 import { Principal } from "@dfinity/principal"
 import { createClient } from "@connect2ic/core"
+import { Info } from "./candid/pop_nft.did"
 
 const customStyles = {
   overlay: {
@@ -77,8 +78,6 @@ const Transfer: React.FC<TransferProps> = (props) => {
   }
 
   const transferNFT = async (to: string) => {
-    console.log("to====", to)
-    console.log(identity)
     try {
       setLoading(true)
       const result: any = await (
@@ -96,11 +95,9 @@ const Transfer: React.FC<TransferProps> = (props) => {
         amount: 1,
       })
       setLoading(false)
-      console.log(result)
       setStep("success")
     } catch (error) {
       setLoading(false)
-      console.error(error)
     }
   }
 
@@ -200,8 +197,8 @@ const Transfer: React.FC<TransferProps> = (props) => {
               <h2 className="mg_t_30" style={{ fontSize: 30 }}>
                 3.
               </h2>
-              <h2 className="c_white">Copy Account ID</h2>
-              <p>Copy “Account ID” in the Profile page.</p>
+              <h2 className="c_white">Copy Principal ID</h2>
+              <p>Copy “Principal ID” in the Profile page.</p>
               <div
                 className="flex"
                 style={{
@@ -214,7 +211,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
                   Close
                 </a>
                 <a onClick={() => setStep("transfer")} className="mint-button">
-                  I have logged into Yumi
+                  Next
                 </a>
               </div>
             </>
@@ -233,18 +230,19 @@ const Transfer: React.FC<TransferProps> = (props) => {
               </div>
 
               <p>
-                PoP NFT is now supported by Yumi marketplace. Please transfer
-                your PoP NFT to your wallet that you used to log into Yumi.
+                PoP NFT will be supported by Yumi marketplace soon. Please stay
+                tuned!
               </p>
               <div>
-                <input
+                {/* <input
                   type="text"
+                  disabled
                   placeholder="Enter Principal ID"
                   onChange={(e) => {
                     setValue(e.target.value)
                     checkFormat(e.target.value)
                   }}
-                />
+                /> */}
                 {error ? (
                   <p className="mg_t_10" style={{ color: "#FF6363" }}>
                     {error}
@@ -254,7 +252,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
               <div
                 className="flex"
                 style={{
-                  justifyContent: "flex-end",
+                  justifyContent: "center",
                   alignItems: "center",
                   marginTop: 290,
                 }}
@@ -262,13 +260,14 @@ const Transfer: React.FC<TransferProps> = (props) => {
                 <a className="button" onClick={close}>
                   Close
                 </a>
-                <button
+                {/* <button
                   onClick={() => transferNFT(value!)}
                   disabled={disabled || loading}
                   className="mint-button"
                 >
                   {loading ? "Transferring..." : "Transfer"}
-                </button>
+                  Coming soon...
+                </button> */}
               </div>
             </>
           )}
@@ -282,10 +281,10 @@ function App() {
   const [link, setLink] = useState("")
   const [open, setOpen] = useState(false)
   const [mintOpen, setMintOpen] = useState(false)
+  const [nftStatus, setNftStatus] = useState<Info>();
   const [active, setActive] = useState(false)
   const [loading, setLoading] = useState(false)
   const { principal, activeProvider, isConnected } = useConnect()
-  const provider = useProviders()
   const [identity, setIdentity] = useState<SignIdentity>()
   const [minted, setMinted] = useState(false)
   const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
@@ -293,7 +292,6 @@ function App() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
-  console.log(provider)
   const params = {
     principal,
     host: window.location.hostname,
@@ -301,16 +299,20 @@ function App() {
 
   useEffect(() => {
     if (isConnected) {
+      setActive(false)
+      setMinted(false)
+      setNftImg(undefined)
+      setTokenIdentifier("")
       const img = new Image()
       img.src = minting
-      console.log(activeProvider)
       // @ts-ignore
       const curIdentity =
-        activeProvider?.identity ??
-        activeProvider?.client._identity
+        activeProvider?.identity ?? activeProvider?.client._identity
+      getNFTStatus()
       setIdentity(curIdentity)
       checkHumanStatus(curIdentity)
       getNFTTokens(curIdentity)
+   
     }
   }, [principal])
 
@@ -322,7 +324,6 @@ function App() {
         sanCode()
       }
     } else {
-      console.error("please connect account.")
       setError("Please connect a wallet.")
       setTimeout(() => {
         setError("")
@@ -335,12 +336,10 @@ function App() {
     if (loading || !identity) return
     localStorage.setItem(principal?.toString()!, "1")
     setLoading(true)
-    console.log(identity.getPrincipal())
     try {
       const result: any = await (
         await popConnection(identity)
       ).actor.claimNFT(identity.getPrincipal(), window.location.hostname)
-      console.log(result)
       getMetaDataByTokenIndex(result["Ok"])
     } catch (error) {
       setError("You have minted a PoP NFT.")
@@ -349,6 +348,14 @@ function App() {
         setMintOpen(false)
       }, 2500)
     }
+  }
+
+  const getNFTStatus = async () => {
+    const statusResult:Info = await (
+      await popNFTConnection(identity!)
+    ).actor.pop_status()
+    console.log("statusResult", statusResult)
+    setNftStatus(statusResult);
   }
 
   const getNFTTokens = async (identity: SignIdentity) => {
@@ -378,18 +385,11 @@ function App() {
     const nftDataResult: any = await (
       await popNFTConnection(identity!)
     ).actor.metadata(tokenIdentifier)
-    console.log(nftDataResult)
     if (hasOwnProperty(nftDataResult, "Ok")) {
       const metadata = nftDataResult["Ok"]["nonfungible"]["metadata"][0]
-      console.log(metadata)
-      // const b64encoded = btoa(
-      //   new TextDecoder("utf8").decode(new Uint8Array(metadata)),
-      // )
       const b64encoded = new TextDecoder("utf8").decode(
         new Uint8Array(metadata),
       )
-      // const b64encoded = bytesToBase64(metadata)
-      console.log(b64encoded)
       setNftImg(b64encoded)
       setMinted(true)
       setLoading(false)
@@ -400,11 +400,10 @@ function App() {
 
   const checkHumanStatus = async (identity: SignIdentity) => {
     const scope = prefix + qs.stringify(params)
-    console.log("popConnection", await popConnection(identity!))
     const result: any = await (
       await popConnection(identity!)
     ).actor.get_token(scope)
-    console.log("result", result)
+    console.log("checkHumanStatus token result", result)
     if (result.Ok && result.Ok.active) {
       clearInterval(timer)
       setActive(true)
@@ -412,7 +411,6 @@ function App() {
   }
 
   const sanCode = async () => {
-    console.log(window.location.hostname)
     const scope = prefix + qs.stringify(params)
     setLink(scope)
     setOpen(true)
@@ -427,7 +425,6 @@ function App() {
       const result: any = await (
         await popConnection(identity!)
       ).actor.get_token(scope)
-      console.log("result", result)
       if (result.Ok && result.Ok.active) {
         //verify
         clearInterval(timer)
@@ -443,7 +440,6 @@ function App() {
       }
     }, 2000)
   }
-  console.log(minted)
   return (
     <div className="container">
       <header className="nav-header ">
@@ -452,7 +448,7 @@ function App() {
           <a
             className="connect-button"
             style={{ width: 230 }}
-            href="https://yvnfd-naaaa-aaaai-acjga-cai.raw.ic0.app/humanid.apk"
+            href="https://astroxme.s3.ap-southeast-1.amazonaws.com/pop_o3hfl_me_plus_live_v1.0.0%2B3_202207011406.apk"
             target="_blank"
           >
             Download Demo App
@@ -469,6 +465,7 @@ function App() {
         <p></p>
       </div>
       <div className="flex align-items-center">
+        <div>
         <p
           style={{
             borderRadius: 20,
@@ -484,6 +481,13 @@ function App() {
           />
           {/* <image href={`data:image/png;charset=utf-8;base64, ${nftImg}`} width="360" height="360"/> */}
         </p>
+        {
+          nftStatus ? (
+            <p className="mg_t_10" style={{width: 360, textAlign: 'center'}}>{nftStatus.available - nftStatus.claimed} / {nftStatus.available} remaining</p>
+          ) : null
+        }
+        </div>
+      
         <div className="flex-1">
           <h1 className="c_white" style={{ marginBottom: 36 }}>
             Prove you’re a real person to mint a <strong>PoP</strong> NFT.
@@ -518,7 +522,7 @@ function App() {
             1.Go to “Settings -&gt; Experiments -&gt; Proof of Personhood” and
             then choose "For Dapps".{" "}
           </p>
-          <p style={{ marginBottom: 30 }}>2.Click "Scan" button.</p>
+          <p style={{ marginBottom: 30 }}>2.Click "Continue" button.</p>
           <div className="flex justify-center">
             <div
               style={{
@@ -589,12 +593,9 @@ function App() {
                 You can mint a <strong>PoP</strong> NFT now.
               </p>
             )}
-            <a
-              onClick={mint}
-              className={`mint-button ${loading ? "disabled" : ""}`}
-            >
+            <button onClick={mint} disabled={loading} className={`mint-button`}>
               {loading ? "Minting..." : minted ? "Close" : "Mint"}
-            </a>
+            </button>
           </>
         )}
       </Modal>
@@ -614,11 +615,14 @@ function App() {
 }
 
 const client = createClient({
-  providers: [new InternetIdentity(), new AstroX({
-    providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app"
-  })],
+  providers: [
+    new InternetIdentity(),
+    new AstroX({
+      providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app",
+    }),
+  ],
   canisters: {},
-  globalProviderConfig: {}
+  globalProviderConfig: {},
 })
 
 export default () => (

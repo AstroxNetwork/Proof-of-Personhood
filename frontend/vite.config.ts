@@ -89,7 +89,8 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    // manifest: true,
   },
   define: {
     // Here we can define global constants

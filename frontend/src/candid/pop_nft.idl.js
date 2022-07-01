@@ -25,6 +25,11 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const Result_1 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CommonError });
+  const TokenObj = IDL.Record({
+    'canister' : IDL.Vec(IDL.Nat8),
+    'index' : IDL.Nat32,
+  });
+  const Result_2 = IDL.Variant({ 'Ok' : TokenObj, 'Err' : IDL.Text });
   const ClaimRequest = IDL.Record({ 'to' : User, 'index' : IDL.Nat32 });
   const Metadata = IDL.Variant({
     'fungible' : IDL.Record({
@@ -35,14 +40,14 @@ export const idlFactory = ({ IDL }) => {
     }),
     'nonfungible' : IDL.Record({ 'metadata' : IDL.Opt(IDL.Vec(IDL.Nat8)) }),
   });
-  const Result_2 = IDL.Variant({ 'Ok' : Metadata, 'Err' : CommonError });
+  const Result_3 = IDL.Variant({ 'Ok' : Metadata, 'Err' : CommonError });
   const Info = IDL.Record({
     'reserve' : IDL.Nat32,
     'claimed' : IDL.Nat32,
     'available' : IDL.Nat32,
     'supply' : IDL.Nat32,
   });
-  const Result_3 = IDL.Variant({
+  const Result_4 = IDL.Variant({
     'Ok' : IDL.Vec(IDL.Nat32),
     'Err' : CommonError,
   });
@@ -62,7 +67,7 @@ export const idlFactory = ({ IDL }) => {
     'Unauthorized' : IDL.Text,
     'Other' : IDL.Text,
   });
-  const Result_4 = IDL.Variant({ 'Ok' : IDL.Nat32, 'Err' : TransferError });
+  const Result_5 = IDL.Variant({ 'Ok' : IDL.Nat32, 'Err' : TransferError });
   return IDL.Service({
     'account_id' : IDL.Func([IDL.Principal], [IDL.Text], ['query']),
     'add_manager' : IDL.Func([IDL.Principal], [IDL.Nat64], []),
@@ -76,9 +81,10 @@ export const idlFactory = ({ IDL }) => {
     'balance' : IDL.Func([BalanceRequest], [Result], ['query']),
     'batchMintNFT' : IDL.Func([IDL.Vec(MintRequest)], [IDL.Vec(IDL.Nat32)], []),
     'bearer' : IDL.Func([IDL.Text], [Result_1], ['query']),
-    'claimNFT' : IDL.Func([MintRequest], [IDL.Nat32], []),
-    'claim_count' : IDL.Func([], [Result], ['query']),
+    'canister_id' : IDL.Func([], [IDL.Principal], ['query']),
+    'claimNFT' : IDL.Func([IDL.Principal], [IDL.Nat32], []),
     'claim_supply' : IDL.Func([], [Result], ['query']),
+    'decode_id' : IDL.Func([IDL.Text], [Result_2], ['query']),
     'extensions' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'force_claim_reserve' : IDL.Func([ClaimRequest], [IDL.Nat32], []),
     'getAllowances' : IDL.Func(
@@ -93,7 +99,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getTokens' : IDL.Func(
-        [],
+        [IDL.Nat32],
         [IDL.Vec(IDL.Tuple(IDL.Nat32, Metadata))],
         ['query'],
       ),
@@ -103,18 +109,21 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'init_reserve' : IDL.Func([IDL.Nat32], [], []),
+    'is_claimable' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'is_manager' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
-    'metadata' : IDL.Func([IDL.Text], [Result_2], ['query']),
+    'is_principal' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'metadata' : IDL.Func([IDL.Text], [Result_3], ['query']),
     'mintNFT' : IDL.Func([MintRequest], [IDL.Nat32], []),
-    'pop_info' : IDL.Func([], [Info], ['query']),
+    'next_claim_id' : IDL.Func([], [Result], ['query']),
+    'pop_status' : IDL.Func([], [Info], ['query']),
     'reserve_tokens' : IDL.Func([], [IDL.Vec(IDL.Nat32)], ['query']),
     'setMinter' : IDL.Func([IDL.Principal], [], []),
     'set_claim_supply' : IDL.Func([IDL.Nat32], [], []),
     'supply' : IDL.Func([IDL.Text], [Result], ['query']),
     'test' : IDL.Func([], [User], ['query']),
     'token_id' : IDL.Func([IDL.Nat32], [IDL.Text], ['query']),
-    'tokens' : IDL.Func([IDL.Text], [Result_3], ['query']),
-    'transfer' : IDL.Func([TransferRequest], [Result_4], []),
+    'tokens' : IDL.Func([IDL.Text], [Result_4], ['query']),
+    'transfer' : IDL.Func([TransferRequest], [Result_5], []),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };
