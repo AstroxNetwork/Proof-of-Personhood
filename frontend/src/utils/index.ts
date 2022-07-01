@@ -1,55 +1,12 @@
 // @ts-nocheck
 import { Principal } from "@dfinity/principal";
+import { numberToU8a } from '@polkadot/util';
 import { byteArrayToWordArray, generateChecksum, wordArrayToByteArray } from "./binary";
 import { ACCOUNT_DOMAIN_SEPERATOR, SUB_ACCOUNT_ZERO } from "./common/constants";
 import CryptoJS from 'crypto-js';
 
 export function hasOwnProperty<X extends Record<string, unknown>, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
   return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-export const to32bits = (num: number): any => {
-  const b = new ArrayBuffer(4);
-  new DataView(b).setUint32(0, num);
-  return Array.from(new Uint8Array(b));
-};
-
-export const from32bits = (ba: any): any => {
-  let value;
-  for (let i = 0; i < 4; i += 1) {
-    value = (value << 8) | ba[i];
-  }
-  return value;
-};
-
-const base64abc = [
-	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-	"N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-	"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
-	"n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
-	"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"
-];
-
-export function bytesToBase64(bytes: number[] | Uint8Array) {
-	let result = '', i, l = bytes.length;
-	for (i = 2; i < l; i += 3) {
-		result += base64abc[bytes[i - 2] >> 2];
-		result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
-		result += base64abc[((bytes[i - 1] & 0x0F) << 2) | (bytes[i] >> 6)];
-		result += base64abc[bytes[i] & 0x3F];
-	}
-	if (i === l + 1) { // 1 octet yet to write
-		result += base64abc[bytes[i - 2] >> 2];
-		result += base64abc[(bytes[i - 2] & 0x03) << 4];
-		result += "==";
-	}
-	if (i === l) { // 2 octets yet to write
-		result += base64abc[bytes[i - 2] >> 2];
-		result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
-		result += base64abc[(bytes[i - 1] & 0x0F) << 2];
-		result += "=";
-	}
-	return result;
 }
 
 export const delay = (time: number): Promise<boolean> => {
@@ -60,15 +17,30 @@ export const delay = (time: number): Promise<boolean> => {
   });
 };
 
-export const getTokenIdentifier = (canister: string, index: number): string => {
-  const padding = Buffer.from('\x0Atid');
-  const array = new Uint8Array([
-    ...padding,
-    ...Principal.fromText(canister).toUint8Array(),
-    ...to32bits(index),
-  ]);
-  return Principal.fromUint8Array(array).toText();
-};
+type TokenIdentifier = number;
+type TokenIndex = number;
+
+export function encode_token_id(
+  canister_id: Principal,
+  token_index: TokenIndex,
+): string {
+  const canister_blob = Array.from(canister_id.toUint8Array());
+
+  const data = [10, 116, 105, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  let count = 4;
+  for (const b of canister_blob) {
+    data[count] = b;
+    count += 1;
+  }
+  const id_blob = Array.from(numberToU8a(token_index, 32));
+
+  for (const c of id_blob) {
+    data[count] = c;
+    count += 1;
+  }
+
+  return Principal.fromUint8Array(new Uint8Array(data)).toText();
+}
 
 export const getAccountId = (
   principal: Principal,

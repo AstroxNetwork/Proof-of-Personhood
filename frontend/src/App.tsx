@@ -19,10 +19,9 @@ import { QRCodeSVG } from "qrcode.react"
 import Modal from "react-modal"
 import { popConnection, popNFTConnection } from "./service/connection"
 import {
-  bytesToBase64,
   delay,
   getAccountId,
-  getTokenIdentifier,
+  encode_token_id,
   hasOwnProperty,
   validatePrincipalId,
 } from "./utils"
@@ -48,7 +47,7 @@ const customStyles = {
     border: 0,
   },
 }
-let timer: number | undefined
+let timer:  NodeJS.Timeout | undefined
 
 const prefix = "astrox://human?"
 
@@ -65,7 +64,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
   const [disabled, setDisabled] = useState(true)
   const [loading, setLoading] = useState(false)
   const [value, setValue] = useState<string>("")
-  const [error, setError] = useState("")
+  const [error, setError] = useState("We will open this transfer feature after NFT market integration.")
 
   const checkFormat = (value: string) => {
     if (validatePrincipalId(value)) {
@@ -234,7 +233,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
                 tuned!
               </p>
               <div>
-                {/* <input
+                <input
                   type="text"
                   disabled
                   placeholder="Enter Principal ID"
@@ -242,7 +241,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
                     setValue(e.target.value)
                     checkFormat(e.target.value)
                   }}
-                /> */}
+                />
                 {error ? (
                   <p className="mg_t_10" style={{ color: "#FF6363" }}>
                     {error}
@@ -375,7 +374,7 @@ function App() {
   }
 
   const getMetaDataByTokenIndex = async (tokenIndex: number) => {
-    const tokenIdentifier: any = getTokenIdentifier(
+    const tokenIdentifier: any = encode_token_id(
       // @ts-ignore
       process.env.POP_NFT_CANISTER_ID,
       tokenIndex,
@@ -425,6 +424,7 @@ function App() {
       const result: any = await (
         await popConnection(identity!)
       ).actor.get_token(scope)
+      console.log(result);
       if (result.Ok && result.Ok.active) {
         //verify
         clearInterval(timer)
