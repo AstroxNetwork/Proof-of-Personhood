@@ -2,8 +2,8 @@ import { Actor, ActorSubclass, HttpAgent, SignIdentity } from "@dfinity/agent";
 import { InterfaceFactory } from "@dfinity/candid/lib/cjs/idl";
 import { idlFactory } from '../candid/live_detect.idl';
 import { _SERVICE } from '../candid/live_detect';
-import { idlFactory as NFT_idlFactory  } from '../candid/pop_nft.idl';
-import { _SERVICE as NFT_SERVICE } from '../candid/pop_nft.did';
+import { idlFactory as NFT_idlFactory  } from '../candid/Pop.did.idl';
+import { _SERVICE as NFT_SERVICE } from '../candid/Pop.did';
 export interface CreateActorResult<T> {
   actor: ActorSubclass<T>;
   agent: HttpAgent;

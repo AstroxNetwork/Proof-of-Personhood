@@ -13,6 +13,7 @@ import banner from "./assets/banner.svg"
 import minting from "./assets/mint.gif"
 import nft from "./assets/116.png"
 import back from "./assets/back.png"
+import stopImg from "./assets/img.png"
 import Footer from "./components/Footer"
 import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
@@ -47,7 +48,7 @@ const customStyles = {
     border: 0,
   },
 }
-let timer:  NodeJS.Timeout | undefined
+let timer: NodeJS.Timeout | undefined
 
 const prefix = "astrox://human?"
 
@@ -64,7 +65,9 @@ const Transfer: React.FC<TransferProps> = (props) => {
   const [disabled, setDisabled] = useState(true)
   const [loading, setLoading] = useState(false)
   const [value, setValue] = useState<string>("")
-  const [error, setError] = useState("We will open this transfer feature after NFT market integration.")
+  const [error, setError] = useState(
+    "We will open this transfer feature after NFT market integration.",
+  )
 
   const checkFormat = (value: string) => {
     if (validatePrincipalId(value)) {
@@ -91,7 +94,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
         token: tokenIdentifier,
         memo: [],
         subaccount: [],
-        amount: 1,
+        amount: BigInt(1),
       })
       setLoading(false)
       setStep("success")
@@ -280,13 +283,14 @@ function App() {
   const [link, setLink] = useState("")
   const [open, setOpen] = useState(false)
   const [mintOpen, setMintOpen] = useState(false)
-  const [nftStatus, setNftStatus] = useState<Info>();
+  const [nftStatus, setNftStatus] = useState<Info>()
   const [active, setActive] = useState(false)
   const [loading, setLoading] = useState(false)
   const { principal, activeProvider, isConnected } = useConnect()
   const [identity, setIdentity] = useState<SignIdentity>()
   const [minted, setMinted] = useState(false)
   const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
+  const [noticeOpen, setNoticeOpen] = useState(false)
   const [nftImg, setNftImg] = useState<string>()
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -297,6 +301,7 @@ function App() {
   }
 
   useEffect(() => {
+    // getNFTStatus()
     if (isConnected) {
       setActive(false)
       setMinted(false)
@@ -307,15 +312,15 @@ function App() {
       // @ts-ignore
       const curIdentity =
         activeProvider?.identity ?? activeProvider?.client._identity
-      getNFTStatus()
       setIdentity(curIdentity)
       checkHumanStatus(curIdentity)
       getNFTTokens(curIdentity)
-   
+      
     }
   }, [principal])
 
   const tryMint = () => {
+    return setNoticeOpen(true)
     if (isConnected) {
       if (active) {
         setMintOpen(true)
@@ -349,13 +354,13 @@ function App() {
     }
   }
 
-  const getNFTStatus = async () => {
-    const statusResult:Info = await (
-      await popNFTConnection(identity!)
-    ).actor.pop_status()
-    console.log("statusResult", statusResult)
-    setNftStatus(statusResult);
-  }
+  // const getNFTStatus = async () => {
+  //   const statusResult: Info = await (
+  //     await popNFTConnection(identity!)
+  //   ).actor.pop_status()
+  //   console.log("statusResult", statusResult)
+  //   setNftStatus(statusResult)
+  // }
 
   const getNFTTokens = async (identity: SignIdentity) => {
     const tokensResult: any = await (
@@ -376,7 +381,7 @@ function App() {
   const getMetaDataByTokenIndex = async (tokenIndex: number) => {
     const tokenIdentifier: any = encode_token_id(
       // @ts-ignore
-      process.env.POP_NFT_CANISTER_ID,
+      Principal.fromText(process.env.POP_NFT_CANISTER_ID),
       tokenIndex,
     )
     console.log("tokenIdentifier", tokenIdentifier)
@@ -424,7 +429,7 @@ function App() {
       const result: any = await (
         await popConnection(identity!)
       ).actor.get_token(scope)
-      console.log(result);
+      console.log(result)
       if (result.Ok && result.Ok.active) {
         //verify
         clearInterval(timer)
@@ -466,28 +471,30 @@ function App() {
       </div>
       <div className="flex align-items-center">
         <div>
-        <p
-          style={{
-            borderRadius: 20,
-            overflow: "hidden",
-            width: 360,
-            height: 360,
-            marginRight: 100,
-          }}
-        >
-          <img
-            style={{ width: 360, height: 360 }}
-            src={minted ? `data:image/png;base64,${nftImg}` : minting}
-          />
-          {/* <image href={`data:image/png;charset=utf-8;base64, ${nftImg}`} width="360" height="360"/> */}
-        </p>
-        {
-          nftStatus ? (
-            <p className="mg_t_10" style={{width: 360, textAlign: 'center'}}>{nftStatus.available - nftStatus.claimed} / {nftStatus.available} remaining</p>
-          ) : null
-        }
+          <p
+            style={{
+              borderRadius: 20,
+              overflow: "hidden",
+              width: 360,
+              height: 360,
+              marginRight: 100,
+            }}
+          >
+            <img
+              style={{ width: 360, height: 360 }}
+              src={minted ? `data:image/png;base64,${nftImg}` : minting}
+            />
+            {/* <image href={`data:image/png;charset=utf-8;base64, ${nftImg}`} width="360" height="360"/> */}
+          </p>
+          {nftStatus ? (
+            <p className="mg_t_10" style={{ width: 360, textAlign: "center" }}>
+              {/* {nftStatus.available - nftStatus.claimed} / {nftStatus.available}{" "} */}
+               8314 / 8800
+              remaining
+            </p>
+          ) : null}
         </div>
-      
+
         <div className="flex-1">
           <h1 className="c_white" style={{ marginBottom: 36 }}>
             Prove you’re a real person to mint a <strong>PoP</strong> NFT.
@@ -598,6 +605,32 @@ function App() {
             </button>
           </>
         )}
+      </Modal>
+      <Modal
+        ariaHideApp={false}
+        isOpen={noticeOpen}
+        style={{
+          ...customStyles,
+          content: {
+            ...customStyles.content,
+            backgroundColor: "transparent",
+            textAlign: "center",
+          },
+        }}
+      >
+        <div style={{ width: 460, borderRadius: 10, overflow: "hidden" }}>
+          <img src={stopImg} alt="" style={{ marginTop: 30, display: 'block', maxWidth: '100%' }} />
+          <div className="content">
+            <h2 className="c_white">We'll be back</h2>
+            <p>We are busy updating the event for you and will be back soon.</p>
+            <button
+              onClick={() => setNoticeOpen(false)}
+              className={`mint-button`}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </Modal>
       <div
         className="toast"
