@@ -22,7 +22,7 @@ type TokenError = variant {
 };
 service : (principal) -> {
   add_manager : (principal) -> ();
-  claimNFT : (principal, text) -> (Result);
+  claimNFT : (text) -> (Result);
   detect_end : (text) -> (Result_1);
   detect_start : (text) -> (Result_2);
   get_nft_canister : () -> (principal) query;

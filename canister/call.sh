@@ -40,7 +40,7 @@ dfx canister call live_detect is_user_alive  '(principal "r2a3n-etwya-gh4cb-4xha
 
 # myumu-2ldby-a7hcq-k7fy3-fpfpy-npwpa-fwh5f-qko6o-xniph-n6atx-vae
 # didf6-xaaaa-aaaai-acmjq-cai
-dfx canister --network ic call live_detect set_nft_canister '(principal "didf6-xaaaa-aaaai-acmjq-cai")'
+dfx canister --network ic call live_detect set_nft_canister '(principal "xpegl-kaaaa-aaaah-abcrq-cai")'
 dfx canister --network ic call live_detect get_token  '("astrox://human?principal=r2a3n-etwya-gh4cb-4xhax-rcndg-guats-vbwis-w3q6v-4svgz-uf53c-mae&host=duh7p-aaaaa-aaaai-acmlq-cai.ic0.app")'
 
 

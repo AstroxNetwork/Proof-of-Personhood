@@ -50,7 +50,7 @@ fn get_nft_canister() -> Principal {
     })
 }
 
-#[update(name = "detect_start")]
+#[update(name = "detect_start", guard = "manager_guard")]
 #[candid_method(update, rename = "detect_start")]
 async fn detect_start(scope: String) -> Result<BatchAction, TokenError> {
     // get random
@@ -92,8 +92,9 @@ fn detect_end(scope: String) -> Result<bool, TokenError> {
 
 #[update(name = "claimNFT")]
 #[candid_method(update, rename = "claimNFT")]
-async fn claim_nft(principal: Principal, host: String) -> Result<TokenIndex, TokenError> {
-    let result = SERVICE.with(|t| { t.borrow().is_user_active(principal.clone(), host) });
+async fn claim_nft(host: String) -> Result<TokenIndex, TokenError> {
+    let caller = caller();
+    let result = SERVICE.with(|t| { t.borrow().is_user_active(caller.clone(), host) });
     match result {
         Ok(active) => {
             if active {
@@ -101,9 +102,9 @@ async fn claim_nft(principal: Principal, host: String) -> Result<TokenIndex, Tok
                 // let nft_canister = Principal::from_text(nft_canister_address).unwrap();
                 let cb = call(
                     nft_canister,
-                    "claimNFT",
+                    "claim",
                     (
-                        principal.clone(),
+                        caller.clone(),
                     )
                 ).await as Result<(TokenIndex,), _>;
                 // ic_cdk::println!("{:?}", cb);
