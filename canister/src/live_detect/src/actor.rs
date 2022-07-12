@@ -146,3 +146,20 @@ async fn get_token(scope: String) -> Result<Token, TokenError> {
         }
     })
 }
+
+#[query(name = "get_detected")]
+#[candid_method(query, rename = "get_detected")]
+async fn get_detected() -> Vec<Token> {
+    SERVICE.with(|t| {
+        let mut res = t.borrow().tokens.iter().filter_map(|(_, val)| {
+            if val.active {
+                Some(val.clone())
+            } else {
+                None
+            }
+        }).collect::<Vec<Token>>();
+        // sort by create_at
+        res.sort_by(|a, b| a.create_at.cmp(&b.create_at));
+        res
+    })
+}

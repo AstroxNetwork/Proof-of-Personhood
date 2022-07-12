@@ -31,4 +31,5 @@ service : (principal) -> {
   is_manager : (principal) -> (bool) query;
   is_user_alive : (principal, text) -> (Result_1) query;
   set_nft_canister : (principal) -> ();
+  get_detected : () -> (vec Token) query;
 }
