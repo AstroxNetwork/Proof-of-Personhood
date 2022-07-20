@@ -31,7 +31,7 @@ export type TokenError = { 'CallerNotExist' : null } |
   { 'TokenInvalid' : null };
 export interface _SERVICE {
   'add_manager' : ActorMethod<[Principal], undefined>,
-  'claimNFT' : ActorMethod<[Principal, string], Result>,
+  'claimNFT' : ActorMethod<[string], Result>,
   'detect_end' : ActorMethod<[string], Result_1>,
   'detect_start' : ActorMethod<[string], Result_2>,
   'get_nft_canister' : ActorMethod<[], Principal>,

@@ -23,23 +23,34 @@ export type CommonError__1 = { 'InvalidToken' : TokenIdentifier } |
   { 'Other' : string };
 export interface ERC721 {
   'acceptCycles' : () => Promise<undefined>,
+  'addWhitelist' : (arg_0: Array<AccountIdentifier__1>) => Promise<undefined>,
   'allowance' : (arg_0: AllowanceRequest) => Promise<Result__1_2>,
   'approve' : (arg_0: ApproveRequest) => Promise<boolean>,
   'approveAll' : (arg_0: Array<ApproveRequest>) => Promise<Array<TokenIndex>>,
   'availableCycles' : () => Promise<bigint>,
   'balance' : (arg_0: BalanceRequest) => Promise<BalanceResponse>,
   'batchMintNFT' : (arg_0: Array<MintRequest>) => Promise<Array<TokenIndex>>,
+  'batchMintNFTForClaimed' : (arg_0: Array<MintRequest1>) => Promise<
+      Array<TokenIndex>
+    >,
   'batchMintNFTForMinter' : (arg_0: Array<MintRequest1>) => Promise<
       Array<TokenIndex>
     >,
   'bearer' : (arg_0: TokenIdentifier__1) => Promise<Result__1_1>,
   'claim' : (arg_0: Principal) => Promise<TokenIndex>,
+  'claimWithWhitelist' : () => Promise<TokenIndex>,
   'extensions' : () => Promise<Array<Extension>>,
   'getAllowances' : () => Promise<Array<[TokenIndex, Principal]>>,
+  'getClaimable' : (arg_0: Principal) => Promise<bigint>,
+  'getClaimed' : () => Promise<Array<[AccountIdentifier__1, TokenIndex]>>,
+  'getClaimer' : () => Promise<Principal>,
+  'getManager' : () => Promise<Principal>,
   'getMinter' : () => Promise<Principal>,
+  'getNextClaimId' : () => Promise<TokenIndex>,
   'getProperties' : () => Promise<Array<[string, Array<[string, bigint]>]>>,
   'getRegistry' : () => Promise<Array<[TokenIndex, AccountIdentifier__1]>>,
   'getRootBucketId' : () => Promise<[] | [string]>,
+  'getSupplyClaim' : () => Promise<TokenIndex>,
   'getTokens' : () => Promise<Array<[TokenIndex, Metadata]>>,
   'getTokensByIds' : (arg_0: Array<TokenIndex>) => Promise<
       Array<[TokenIndex, Metadata]>
@@ -47,14 +58,17 @@ export interface ERC721 {
   'getTokensByProperties' : (arg_0: Array<[string, Array<string>]>) => Promise<
       Array<[TokenIndex, Metadata]>
     >,
+  'getWhitelist' : () => Promise<Array<[AccountIdentifier__1, bigint]>>,
   'http_request' : (arg_0: HttpRequest) => Promise<HttpResponse>,
   'initCap' : () => Promise<[] | [string]>,
   'initproperties' : () => Promise<undefined>,
   'metadata' : (arg_0: TokenIdentifier__1) => Promise<Result__1>,
   'mintNFT' : (arg_0: MintRequest) => Promise<TokenIndex>,
   'setClaimer' : (arg_0: Principal) => Promise<undefined>,
+  'setManager' : (arg_0: Principal) => Promise<undefined>,
   'setMinter' : (arg_0: Principal) => Promise<undefined>,
   'setSupplyClaim' : (arg_0: TokenIndex) => Promise<undefined>,
+  'setWlLimit' : (arg_0: bigint) => Promise<undefined>,
   'supply' : (arg_0: TokenIdentifier__1) => Promise<Result_2>,
   'tokens' : (arg_0: AccountIdentifier__1) => Promise<Result_1>,
   'tokens_ext' : (arg_0: AccountIdentifier__1) => Promise<Result>,

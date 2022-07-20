@@ -31,8 +31,8 @@ a.button {
     margin-right: auto;
     border: 1px solid #B5FF26;
     padding: 0 20px;
-    line-height: 38px;
-    height: 38px;
+    line-height: 40px;
+    height: 40px;
     border-radius: 20px;
     cursor: pointer;
 }
@@ -192,6 +192,74 @@ a.button {
   button {
     border: 0;
   }
+}
+
+.tabs {
+  overflow: hidden;
+  .tabs-nav {
+    display: flex;
+    margin-bottom: 20px;
+    .tab-item {
+      margin-right: 50px;
+      color:  #9C9CA4;
+      position: relative;
+      padding: 5px 0;
+      &.tab-item-active {
+        color: #ffffff;
+        &::before {
+          position: absolute;
+          width: 100%;
+          content: '';
+          height: 3px;
+          background-color: #B5FF26;
+          bottom: 0;
+          left: 0;
+        }
+      }
+    }
+  }
+  .tabs-content {
+    background-color: #23232F;
+    border-radius: 10px;
+    padding: 20px 0;
+    h1 {
+      font-size: 30px;
+    }
+  }
+}
+
+.time-line {
+  position: relative;
+  z-index: 2;
+  margin-top: 24px;
+  margin-right: 7px;
+  &::after {
+    z-index: -1;
+    position: absolute;
+    top: 12px;
+    content: '';
+    width: 2px;
+    height: 322px;
+    background-color: #0B0B0F;
+  }
+  .time-item {
+    height: 16px;
+    line-height: 16px;
+    min-width: 40px;
+    border-radius: 8px;
+    background-color: #5D5D6C;
+    color: #23232F;
+    margin-bottom: 90px;
+    font-weight: 700;
+    padding: 0 5px;
+    &.active {
+      background-color: #B5FF26;
+    }
+  }
+}
+
+.step {
+  margin-bottom: 43px;
 }
 
 @keyframes pulse {

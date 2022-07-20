@@ -1,5 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AccountIdentifier__1 = IDL.Text;
   const TokenIdentifier = IDL.Text;
   const AccountIdentifier = IDL.Text;
   const User = IDL.Variant({
@@ -42,16 +41,8 @@ export const idlFactory = ({ IDL }) => {
     'to' : User,
     'metadata' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const User__1 = IDL.Variant({
-    'principal' : IDL.Principal,
-    'address' : AccountIdentifier,
-  });
-  const MintRequest1 = IDL.Record({
-    'to' : User__1,
-    'token' : TokenIndex,
-    'metadata' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
   const TokenIdentifier__1 = IDL.Text;
+  const AccountIdentifier__1 = IDL.Text;
   const Result__1_1 = IDL.Variant({
     'ok' : AccountIdentifier__1,
     'err' : CommonError,
@@ -119,7 +110,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ERC721 = IDL.Service({
     'acceptCycles' : IDL.Func([], [], []),
-    'addWhitelist' : IDL.Func([IDL.Vec(AccountIdentifier__1)], [], []),
     'allowance' : IDL.Func([AllowanceRequest], [Result__1_2], ['query']),
     'approve' : IDL.Func([ApproveRequest], [IDL.Bool], []),
     'approveAll' : IDL.Func(
@@ -134,35 +124,15 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenIndex)],
         [],
       ),
-    'batchMintNFTForClaimed' : IDL.Func(
-        [IDL.Vec(MintRequest1)],
-        [IDL.Vec(TokenIndex)],
-        [],
-      ),
-    'batchMintNFTForMinter' : IDL.Func(
-        [IDL.Vec(MintRequest1)],
-        [IDL.Vec(TokenIndex)],
-        [],
-      ),
     'bearer' : IDL.Func([TokenIdentifier__1], [Result__1_1], ['query']),
-    'claim' : IDL.Func([IDL.Principal], [TokenIndex], []),
-    'claimWithWhitelist' : IDL.Func([], [TokenIndex], []),
+    'burn' : IDL.Func([IDL.Nat], [IDL.Vec(TokenIndex)], []),
     'extensions' : IDL.Func([], [IDL.Vec(Extension)], ['query']),
     'getAllowances' : IDL.Func(
         [],
         [IDL.Vec(IDL.Tuple(TokenIndex, IDL.Principal))],
         ['query'],
       ),
-    'getClaimable' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
-    'getClaimed' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Tuple(AccountIdentifier__1, TokenIndex))],
-        [],
-      ),
-    'getClaimer' : IDL.Func([], [IDL.Principal], ['query']),
-    'getManager' : IDL.Func([], [IDL.Principal], ['query']),
     'getMinter' : IDL.Func([], [IDL.Principal], ['query']),
-    'getNextClaimId' : IDL.Func([], [TokenIndex], []),
     'getProperties' : IDL.Func(
         [],
         [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat))))],
@@ -174,7 +144,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getRootBucketId' : IDL.Func([], [IDL.Opt(IDL.Text)], []),
-    'getSupplyClaim' : IDL.Func([], [TokenIndex], ['query']),
     'getTokens' : IDL.Func(
         [],
         [IDL.Vec(IDL.Tuple(TokenIndex, Metadata))],
@@ -190,21 +159,12 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(IDL.Tuple(TokenIndex, Metadata))],
         ['query'],
       ),
-    'getWhitelist' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Tuple(AccountIdentifier__1, IDL.Nat))],
-        ['query'],
-      ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'initCap' : IDL.Func([], [IDL.Opt(IDL.Text)], []),
     'initproperties' : IDL.Func([], [], []),
     'metadata' : IDL.Func([TokenIdentifier__1], [Result__1], ['query']),
     'mintNFT' : IDL.Func([MintRequest], [TokenIndex], []),
-    'setClaimer' : IDL.Func([IDL.Principal], [], []),
-    'setManager' : IDL.Func([IDL.Principal], [], []),
     'setMinter' : IDL.Func([IDL.Principal], [], []),
-    'setSupplyClaim' : IDL.Func([TokenIndex], [], []),
-    'setWlLimit' : IDL.Func([IDL.Nat], [], []),
     'supply' : IDL.Func([TokenIdentifier__1], [Result_2], ['query']),
     'tokens' : IDL.Func([AccountIdentifier__1], [Result_1], ['query']),
     'tokens_ext' : IDL.Func([AccountIdentifier__1], [Result], ['query']),
@@ -212,4 +172,4 @@ export const idlFactory = ({ IDL }) => {
   });
   return ERC721;
 };
-export const init = ({ IDL }) => { return [IDL.Principal, IDL.Principal]; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };

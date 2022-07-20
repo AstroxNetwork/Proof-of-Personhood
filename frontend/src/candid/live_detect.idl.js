@@ -31,7 +31,7 @@ export const idlFactory = ({ IDL }) => {
   const Result_3 = IDL.Variant({ 'Ok' : Token, 'Err' : TokenError });
   return IDL.Service({
     'add_manager' : IDL.Func([IDL.Principal], [], []),
-    'claimNFT' : IDL.Func([IDL.Principal, IDL.Text], [Result], []),
+    'claimNFT' : IDL.Func([IDL.Text], [Result], []),
     'detect_end' : IDL.Func([IDL.Text], [Result_1], []),
     'detect_start' : IDL.Func([IDL.Text], [Result_2], []),
     'get_nft_canister' : IDL.Func([], [IDL.Principal], ['query']),

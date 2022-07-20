@@ -1,26 +1,25 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { AstroX, InternetIdentity } from "@connect2ic/core/providers"
 import {
   ConnectButton,
   ConnectDialog,
   Connect2ICProvider,
   useConnect,
-  useProviders,
 } from "@connect2ic/react"
 import "@connect2ic/core/style.css"
 import logo from "./assets/logo.svg"
 import banner from "./assets/banner.svg"
 import minting from "./assets/mint.gif"
-import nft from "./assets/116.png"
 import back from "./assets/back.png"
+import HELP from "./assets/help.svg"
 import stopImg from "./assets/img.png"
+import maxImg from "./assets/img1.png"
 import Footer from "./components/Footer"
 import qs from "querystring"
 import { QRCodeSVG } from "qrcode.react"
 import Modal from "react-modal"
-import { popConnection, popNFTConnection } from "./service/connection"
+import { martianNFTConnection, NFT_URL, popConnection, popNFTConnection } from "./service/connection"
 import {
-  delay,
   getAccountId,
   encode_token_id,
   hasOwnProperty,
@@ -29,7 +28,21 @@ import {
 import { SignIdentity } from "@dfinity/agent"
 import { Principal } from "@dfinity/principal"
 import { createClient } from "@connect2ic/core"
-import { Info } from "./candid/pop_nft.did"
+import RateView from "./components/Rate"
+
+type Info = {
+  claimed: number;
+  available: number;
+  reserve: number;
+  supply: number;
+}
+
+type userNFTInfo = {
+  tokenIndex: number,
+  url: string,
+  tokenIdentifier: string,
+  type: 'pop' | 'martian'
+}
 
 const customStyles = {
   overlay: {
@@ -53,21 +66,23 @@ let timer: NodeJS.Timeout | undefined
 const prefix = "astrox://human?"
 
 type TransferProps = {
-  nftImg: string
+  userToken: userNFTInfo;
   close: () => void
   identity: SignIdentity
   fromPrincipal: string
-  tokenIdentifier: string
+  transferDone: () => void
 }
 const Transfer: React.FC<TransferProps> = (props) => {
-  const { nftImg, identity, fromPrincipal, tokenIdentifier, close } = props
+  const { userToken, identity, fromPrincipal, close } = props
   const [step, setStep] = useState<"main" | "transfer" | "success">("main")
   const [disabled, setDisabled] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [principalHelp, setPrincipalHelp] = useState(false)
   const [value, setValue] = useState<string>("")
   const [error, setError] = useState(
-    "We will open this transfer feature after NFT market integration.",
+    "",
   )
+  // We will open this transfer feature after NFT market integration.
 
   const checkFormat = (value: string) => {
     if (validatePrincipalId(value)) {
@@ -82,22 +97,27 @@ const Transfer: React.FC<TransferProps> = (props) => {
   const transferNFT = async (to: string) => {
     try {
       setLoading(true)
-      const result: any = await (
+      const curActor = userToken.type === 'pop' ? await (
         await popNFTConnection(identity!)
-      ).actor.transfer({
+      ).actor : await (
+        await martianNFTConnection(identity!)
+      ).actor
+      const result: any = curActor.transfer({
         to: {
           principal: Principal.fromText(to),
         },
+        notify: true,
         from: {
           principal: Principal.fromText(fromPrincipal!),
         },
-        token: tokenIdentifier,
+        token: userToken.tokenIdentifier,
         memo: [],
         subaccount: [],
         amount: BigInt(1),
       })
-      setLoading(false)
+      // setLoading(false)
       setStep("success")
+      props.transferDone()
     } catch (error) {
       setLoading(false)
     }
@@ -119,14 +139,14 @@ const Transfer: React.FC<TransferProps> = (props) => {
           }}
         >
           <img
-            src={`data:image/png;base64,${nftImg}`}
+            src={`${userToken.url}`}
             alt=""
             style={{ width: 360, height: 360 }}
           />
         </p>
         <h1 className="mg_t_20 c_white">Success!</h1>
         <p className="c_white">
-          You have transferred your PoP NFT to the following wallet. PoP NFT can
+          You have transferred your NFT to the following wallet. NFT can
           be traded on Yumi now.
         </p>
         <p>
@@ -153,7 +173,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
           }}
         >
           <img
-            src={`data:image/png;base64,${nftImg}`}
+            src={`${userToken.url}`}
             alt=""
             style={{ width: 360, height: 360 }}
           />
@@ -162,9 +182,9 @@ const Transfer: React.FC<TransferProps> = (props) => {
           className="c_white mg_t_20"
           style={{ fontSize: 46, textAlign: "left" }}
         >
-          PoP NFT<br></br> Minted
+          NFT<br></br> Minted
         </h1>
-        <p>You have minted and can trade PoP NFT on Yumi marketplace.</p>
+        <p>You have minted and can trade NFT on Yumi marketplace.</p>
       </div>
       <div className="flex-1">
         <div className="card">
@@ -205,7 +225,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
                 className="flex"
                 style={{
                   justifyContent: "flex-end",
-                  alignItems: "center",
+                  alignItems: "flex-end",
                   marginTop: 50,
                 }}
               >
@@ -227,100 +247,141 @@ const Transfer: React.FC<TransferProps> = (props) => {
                   onClick={() => setStep("main")}
                 />
                 <div className="flex-1">
-                  <h1 className="c_white">Transfer PoP NFT</h1>
+                  <h1 className="c_white">Transfer NFT</h1>
                 </div>
               </div>
 
               <p>
-                PoP NFT will be supported by Yumi marketplace soon. Please stay
-                tuned!
+                NFT is now supported by Yumi marketplace. Please transfer your NFT to you wallet that you used to log into Yumi.
               </p>
-              <div>
-                <input
-                  type="text"
-                  disabled
-                  placeholder="Enter Principal ID"
-                  onChange={(e) => {
-                    setValue(e.target.value)
-                    checkFormat(e.target.value)
-                  }}
-                />
-                {error ? (
-                  <p className="mg_t_10" style={{ color: "#FF6363" }}>
-                    {error}
-                  </p>
-                ) : null}
+              <div className="flex">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    // disabled
+                    placeholder="Enter Principal ID"
+                    onChange={(e) => {
+                      setValue(e.target.value)
+                      checkFormat(e.target.value)
+                    }}
+                  />
+                </div>
+                <img src={HELP} alt="" style={{ width: 24, height: 24, marginLeft: 10, marginTop: 50 }} onClick={() => setPrincipalHelp(true)} />
               </div>
+              {error ? (
+                <p className="mg_t_10" style={{ color: "#FF6363" }}>
+                  {error}
+                </p>
+              ) : null}
               <div
                 className="flex"
                 style={{
                   justifyContent: "center",
-                  alignItems: "center",
+                  alignItems: "flex-end",
                   marginTop: 290,
                 }}
               >
                 <a className="button" onClick={close}>
                   Close
                 </a>
-                {/* <button
+                <button
                   onClick={() => transferNFT(value!)}
                   disabled={disabled || loading}
                   className="mint-button"
                 >
                   {loading ? "Transferring..." : "Transfer"}
-                  Coming soon...
-                </button> */}
+                </button>
               </div>
             </>
           )}
         </div>
       </div>
+      <Modal
+        ariaHideApp={false}
+        isOpen={principalHelp}
+        style={{
+          ...customStyles,
+          content: {
+            ...customStyles.content,
+            backgroundColor: "transparent",
+            textAlign: "center",
+          },
+        }}
+      >
+        <div className="content" style={{ borderRadius: 10, overflow: 'hidden' }}>
+          <h2 className="c_white">You can find it in Profile page of <a style={{ textDecoration: 'underline' }} className="c_brand" href="https://yumi.io" target="_blank">Yumi</a></h2>
+          <button
+            onClick={() => setPrincipalHelp(false)}
+            className="mint-button"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }
 
+let userNFTInfo: userNFTInfo[] = [];
 function App() {
   const [link, setLink] = useState("")
   const [open, setOpen] = useState(false)
   const [mintOpen, setMintOpen] = useState(false)
   const [nftStatus, setNftStatus] = useState<Info>()
   const [active, setActive] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const { principal, activeProvider, isConnected } = useConnect()
+  const [minted, setMinted] = useState(false);
+  const [claimable, setClaimable] = useState<undefined | number>()
   const [identity, setIdentity] = useState<SignIdentity>()
-  const [minted, setMinted] = useState(false)
-  const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
   const [noticeOpen, setNoticeOpen] = useState(false)
-  const [nftImg, setNftImg] = useState<string>()
+  const [rateOpen, setRateOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [userTokens, setUserTokens] = useState<undefined | userNFTInfo[]>()
+  const [selectToken, setSelectToken] = useState<undefined | userNFTInfo>()
+  // const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
+  // const [nftImg, setNftImg] = useState<string>()
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-
   const params = {
     principal,
     host: window.location.hostname,
   }
 
   useEffect(() => {
-    // getNFTStatus()
+    getNFTStatus()
+    setActive(false)
+    setUserTokens(undefined)
+    setClaimable(undefined)
+    setSelectToken(undefined)
+    setUserTokens(undefined)
+    userNFTInfo=[]
     if (isConnected) {
-      setActive(false)
-      setMinted(false)
-      setNftImg(undefined)
-      setTokenIdentifier("")
       const img = new Image()
       img.src = minting
       // @ts-ignore
       const curIdentity =
         activeProvider?.identity ?? activeProvider?.client._identity
       setIdentity(curIdentity)
-      checkHumanStatus(curIdentity)
       getNFTTokens(curIdentity)
-      
+      getMartianNFTTokens(curIdentity);
+      getClaimable(curIdentity);
+      checkHumanStatus(curIdentity)
     }
   }, [principal])
 
+  const initNFT = (identity: SignIdentity) => {
+    userNFTInfo = []
+    getNFTTokens(identity)
+    getMartianNFTTokens(identity);
+  }
+
   const tryMint = () => {
-    return setNoticeOpen(true)
+    // setMinted(true)
+    // setMintOpen(true)
+    // return setNoticeOpen(true);
+    console.log(nftStatus)
+    if (nftStatus && nftStatus?.claimed > nftStatus?.available && !minted) return setNoticeOpen(true)
     if (isConnected) {
       if (active) {
         setMintOpen(true)
@@ -336,70 +397,177 @@ function App() {
   }
 
   const mint = async () => {
-    if (minted) return setMintOpen(false)
+    console.log(nftStatus?.claimed)
+    console.log(nftStatus?.available)
+    console.log(nftStatus)
+    if (nftStatus && nftStatus?.claimed > nftStatus?.available && !minted) return setNoticeOpen(true)
+    if (!(claimable && claimable > 0)) return setMintOpen(false)
     if (loading || !identity) return
-    localStorage.setItem(principal?.toString()!, "1")
     setLoading(true)
     try {
+      // const result: any = await (
+      //   await popConnection(identity)
+      // ).actor.claimNFT(window.location.hostname)
       const result: any = await (
-        await popConnection(identity)
-      ).actor.claimNFT(identity.getPrincipal(), window.location.hostname)
-      getMetaDataByTokenIndex(result["Ok"])
+        await popNFTConnection(identity)
+      ).actor.claimWithWhitelist();
+      getNFTTokens(identity)
+      getClaimable(identity)
+      setMintOpen(false)
+      getNFTStatus()
     } catch (error) {
+      console.log(error)
       setError("You have minted a PoP NFT.")
       setTimeout(() => {
         setError("")
         setMintOpen(false)
       }, 2500)
+      getNFTStatus();
     }
   }
 
-  // const getNFTStatus = async () => {
-  //   const statusResult: Info = await (
-  //     await popNFTConnection(identity!)
-  //   ).actor.pop_status()
-  //   console.log("statusResult", statusResult)
-  //   setNftStatus(statusResult)
-  // }
+  const getNFTStatus = async () => {
+    const supplyResult = await (
+      await popNFTConnection(identity!)
+    ).actor.supply('test')
+    let claimed, reserve, supply, available;
+    if (hasOwnProperty(supplyResult, 'ok')) {
+      console.log("supplyResult", supplyResult['ok'])
+      supply = supplyResult['ok']
+    }
+    claimed = await (
+      await popNFTConnection(identity!)
+    ).actor.getNextClaimId();
+    available = await (
+      await popNFTConnection(identity!)
+    ).actor.getSupplyClaim();
+
+    const statusResult: Info = {
+      claimed,
+      reserve: 0,
+      available,
+      supply: Number(supply) ?? 0
+    }
+    console.log('statusResult', statusResult)
+    setNftStatus(statusResult)
+  }
 
   const getNFTTokens = async (identity: SignIdentity) => {
     const tokensResult: any = await (
       await popNFTConnection(identity!)
     ).actor.tokens(getAccountId(identity.getPrincipal()))
     console.log("token result", tokensResult)
-    // setLoading(true)
-    if (hasOwnProperty(tokensResult, "Ok")) {
-      if (tokensResult["Ok"].length > 0) {
-        console.log(tokensResult["Ok"][0])
-        getMetaDataByTokenIndex(tokensResult["Ok"][0])
+    setLoading(true)
+    if (hasOwnProperty(tokensResult, "ok")) {
+      if (tokensResult["ok"].length > 0) {
+        console.log(tokensResult["ok"])
+        const tokenIndexs = tokensResult["ok"]
+
+        for (let i = 0; i < tokenIndexs.length; i++) {
+          const tokenIdentifier: any = encode_token_id(
+            // @ts-ignore
+            Principal.fromText(process.env.POP_NFT_CANISTER_ID),
+            tokenIndexs[i],
+          )
+          const url = await getPopUrlByTokenIndex(tokenIdentifier)
+          const obj: userNFTInfo = {
+            tokenIndex: tokenIndexs[i],
+            tokenIdentifier,
+            url,
+            type: 'pop'
+          };
+          userNFTInfo.push(obj)
+        }
+        console.log(userNFTInfo)
+        setUserTokens(userNFTInfo)
+
       }
     } else {
       setLoading(false)
     }
   }
 
-  const getMetaDataByTokenIndex = async (tokenIndex: number) => {
-    const tokenIdentifier: any = encode_token_id(
-      // @ts-ignore
-      Principal.fromText(process.env.POP_NFT_CANISTER_ID),
-      tokenIndex,
-    )
-    console.log("tokenIdentifier", tokenIdentifier)
-    setTokenIdentifier(tokenIdentifier)
-    const nftDataResult: any = await (
-      await popNFTConnection(identity!)
-    ).actor.metadata(tokenIdentifier)
-    if (hasOwnProperty(nftDataResult, "Ok")) {
-      const metadata = nftDataResult["Ok"]["nonfungible"]["metadata"][0]
-      const b64encoded = new TextDecoder("utf8").decode(
-        new Uint8Array(metadata),
-      )
-      setNftImg(b64encoded)
-      setMinted(true)
-      setLoading(false)
+  const getMartianNFTTokens = async (identity: SignIdentity) => {
+    const tokensResult: any = await (
+      await martianNFTConnection(identity!)
+    ).actor.tokens(getAccountId(identity.getPrincipal()))
+    console.log("martian token result", tokensResult)
+    setLoading(true)
+    if (hasOwnProperty(tokensResult, "ok")) {
+      if (tokensResult["ok"].length > 0) {
+        console.log(tokensResult["ok"])
+        const tokenIndexs = tokensResult["ok"]
+        for (let i = 0; i < tokenIndexs.length; i++) {
+          const tokenIdentifier: any = encode_token_id(
+            // @ts-ignore
+            Principal.fromText(process.env.MARTIAN_NFT_CANISTER_ID),
+            tokenIndexs[i],
+          )
+          const url = await getMartianUrlByTokenIndex(tokenIdentifier)
+          const obj: userNFTInfo = {
+            tokenIndex: tokenIndexs[i],
+            tokenIdentifier,
+            url,
+            type: 'martian'
+          };
+          userNFTInfo.push(obj)
+        }
+        setUserTokens(userNFTInfo)
+      }
     } else {
       setLoading(false)
     }
+  }
+
+
+  const getMartianUrlByTokenIndex = async (tokenIdentifier: string) => {
+    console.log('tokenIdentifier', tokenIdentifier)
+    const nftDataResult: any = await (
+      await martianNFTConnection(identity!)
+    ).actor.metadata(tokenIdentifier)
+    console.log('getMartianUrlByTokenIndex result', nftDataResult)
+    if (hasOwnProperty(nftDataResult, "ok")) {
+      const metadata = nftDataResult["ok"]["nonfungible"]["metadata"][0]
+      const b64encoded = new TextDecoder("utf8").decode(
+        new Uint8Array(metadata),
+      )
+      const url = JSON.parse(b64encoded).url
+      console.log("b64encoded", b64encoded)
+      setLoading(false)
+      return url;
+    } else {
+      setLoading(false)
+      return undefined;
+    }
+  }
+
+
+  const getPopUrlByTokenIndex = async (tokenIdentifier: string) => {
+    console.log("tokenIdentifier", tokenIdentifier)
+    const nftDataResult: any = await (
+      await popNFTConnection(identity!)
+    ).actor.metadata(tokenIdentifier)
+    if (hasOwnProperty(nftDataResult, "ok")) {
+      console.log("nftDataResult", nftDataResult)
+      const metadata = nftDataResult["ok"]["nonfungible"]["metadata"][0]
+      const b64encoded = new TextDecoder("utf8").decode(
+        new Uint8Array(metadata),
+      )
+      const url = JSON.parse(b64encoded).url
+      setLoading(false)
+      return url;
+    } else {
+      setLoading(false)
+      return undefined;
+    }
+  }
+
+  const getClaimable = async (identity: SignIdentity) => {
+    const result = await (
+      await popNFTConnection(identity!)
+    ).actor.getClaimable(identity.getPrincipal());
+    console.log('claim ', result)
+    setClaimable(Number(result))
   }
 
   const checkHumanStatus = async (identity: SignIdentity) => {
@@ -418,6 +586,7 @@ function App() {
     const scope = prefix + qs.stringify(params)
     setLink(scope)
     setOpen(true)
+    // return setOpen(true)
     // const startResult: any = await connection.actor.detect_start(scope, 0)
     // console.log("startResult", startResult)
     // setTimeout(async () => {
@@ -453,7 +622,7 @@ function App() {
           <a
             className="connect-button"
             style={{ width: 230 }}
-            href="https://astroxme.s3.ap-southeast-1.amazonaws.com/pop_o3hfl_me_plus_live_v1.0.0%2B3_202207011406.apk"
+            href="https://astroxme.s3.ap-southeast-1.amazonaws.com/pop_o3hfl_me_plus_v1.0.0%2B4_202207052356.apk"
             target="_blank"
           >
             Download Demo App
@@ -469,29 +638,35 @@ function App() {
         </p>
         <p></p>
       </div>
-      <div className="flex align-items-center">
+      <div className="flex">
         <div>
           <p
             style={{
               borderRadius: 20,
               overflow: "hidden",
-              width: 360,
-              height: 360,
+              width: 247,
+              height: 247,
               marginRight: 100,
             }}
           >
-            <img
+            {/* <img
               style={{ width: 360, height: 360 }}
               src={minted ? `data:image/png;base64,${nftImg}` : minting}
+            /> */}
+            <img
+              style={{ width: 247, height: 247 }}
+              src={minting}
             />
-            {/* <image href={`data:image/png;charset=utf-8;base64, ${nftImg}`} width="360" height="360"/> */}
           </p>
           {nftStatus ? (
-            <p className="mg_t_10" style={{ width: 360, textAlign: "center" }}>
-              {/* {nftStatus.available - nftStatus.claimed} / {nftStatus.available}{" "} */}
-               8314 / 8800
-              remaining
-            </p>
+            <div className="flex mg_t_10" style={{ width: 247, justifyContent: 'space-between' }}>
+              <p>
+                {nftStatus.supply - nftStatus.claimed} / {nftStatus.supply}{" "}remaining
+                {/* 8314 / 8800 */}
+              </p>
+              <a className="c_brand" onClick={() => setRateOpen(true)} style={{ textDecoration: 'underline' }}>Volume &gt;</a>
+            </div>
+
           ) : null}
         </div>
 
@@ -504,18 +679,112 @@ function App() {
               <ConnectButton />
             </div>
             {principal ? (
-              <>
+              <div>
+                <p className="c_brand" style={{ marginLeft: 10 }}>Principal ID: </p>
                 <p className="c_white" style={{ marginLeft: 10 }}>
-                  Principal ID: {principal}
+                  {principal}
                 </p>
-              </>
+              </div>
             ) : null}
           </div>
-          <button className="mint-button" disabled={loading} onClick={tryMint}>
-            Mint Now
-          </button>
+          <div className="flex">
+            <button className="mint-button" disabled={loading || !(claimable && claimable > 0)} onClick={tryMint}>
+              Mint Now
+            </button>
+            {claimable !== undefined && active ? (
+              <p className="c_white" style={{ marginLeft: 10, marginTop: 45 }}>
+                {
+                  claimable === 0 ? 'You have minted all your NFT.' : <span>You can mint <span className="c_brand">{claimable}</span> NFT now.</span>
+                }
+              </p>
+            ) : null}
+          </div>
+          {
+            userTokens ? (
+              <>
+                {
+                  userTokens.filter(o => o.type === 'pop').length > 0 ? (
+                    <div style={{ marginTop: 60 }}>
+                      <p className="c_white" style={{ marginRight: 10 }}>
+                        PoP NFT:
+                      </p>
+                      <div className="flex">
+
+                        <div className="flex-1 flex">
+                          {
+                            userTokens.filter(o => o.type === 'pop').map((tokenInfo) => {
+                              return (
+                                <div style={{ width: 137, marginRight: 40 }}>
+                                  <img
+                                    style={{ width: 137, height: 137, borderRadius: 10, display: 'block' }}
+                                    src={tokenInfo.url}
+                                  />
+
+                                  <button
+                                    className="mint-button"
+                                    style={{
+                                      width: '100%',
+                                      marginTop: 20
+                                    }}
+                                    onClick={() => {
+                                      setSelectToken(tokenInfo)
+                                      setTransferOpen(true)
+                                    }}>
+                                    Transfer
+                                  </button>
+                                </div>
+                              )
+                            })
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  ) : null
+                }
+                {
+                  userTokens.filter(o => o.type === 'martian').length > 0 ? (
+                    <div style={{ marginTop: 60 }}>
+                      <p className="c_white" style={{ marginRight: 10 }}>
+                        Martian NFT:
+                      </p>
+                      <div className="flex">
+                        <div className="flex-1 flex">
+                          {
+                            userTokens.filter(o => o.type === 'martian').map((tokenInfo) => {
+                              return (
+                                <div style={{ width: 137, marginRight: 40 }}>
+                                  <img
+                                    style={{ width: 137, height: 137, borderRadius: 10, display: 'block' }}
+                                    src={tokenInfo.url}
+                                  />
+
+                                  <button
+                                    className="mint-button"
+                                    style={{
+                                      width: '100%',
+                                      marginTop: 20
+                                    }}
+                                    onClick={() => {
+                                      setSelectToken(tokenInfo)
+                                      setTransferOpen(true)
+                                    }}>
+                                    Transfer
+                                  </button>
+                                </div>
+                              )
+                            })
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  ) : null
+                }
+              </>
+            ) : null
+          }
         </div>
       </div>
+
       <Footer />
       <Modal
         ariaHideApp={false}
@@ -550,6 +819,41 @@ function App() {
             </a>
           </p>
         </div>
+        {/* <div className="modal-content">
+          <h1 className="c_white">Notice</h1>
+          <p className="c_white">The first round is ended. Please wait for the next round.</p>
+          <p style={{ textAlign: "center" }}>
+            <a onClick={() => setOpen(false)} className="button">
+              OK
+            </a>
+          </p>
+        </div> */}
+      </Modal>
+      <Modal
+        ariaHideApp={false}
+        isOpen={transferOpen}
+        style={{
+          ...customStyles,
+          content: {
+            ...customStyles.content,
+            backgroundColor: "transparent",
+            textAlign: "center",
+          },
+        }}
+      >
+        <Transfer
+          close={() => setTransferOpen(false)}
+          userToken={selectToken!}
+          fromPrincipal={principal!}
+          identity={identity!}
+          transferDone={() => {
+            getNFTStatus()
+            setTimeout(() => {
+              initNFT(identity!)
+            }, 2000)
+            
+          }}
+        />
       </Modal>
       <Modal
         ariaHideApp={false}
@@ -563,48 +867,35 @@ function App() {
           },
         }}
       >
-        {minted ? (
-          <Transfer
-            close={() => setMintOpen(false)}
-            nftImg={nftImg!}
-            fromPrincipal={principal!}
-            tokenIdentifier={tokenIdentifier}
-            identity={identity!}
+        <p
+          style={{
+            textAlign: "center",
+            width: 360,
+            height: 360,
+            marginBottom: 20,
+            overflow: "hidden",
+            borderRadius: 20,
+          }}
+        >
+          <img
+            src={minting}
+            alt=""
+            style={{ width: 360, height: 360 }}
           />
+        </p>
+        <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
+        {minted ? (
+          <p>
+            You have minted a <strong>PoP</strong> NFT.
+          </p>
         ) : (
-          <>
-            <p
-              style={{
-                textAlign: "center",
-                width: 360,
-                height: 360,
-                marginBottom: 20,
-                overflow: "hidden",
-                borderRadius: 20,
-              }}
-            >
-              <img
-                src={minted ? `data:image/png;base64,${nftImg}` : minting}
-                alt=""
-                style={{ width: 360, height: 360 }}
-              />
-            </p>
-            <h1 className="c_white">{minted ? "Minted!" : "Verified!"}</h1>
-
-            {minted ? (
-              <p>
-                You have minted a <strong>PoP</strong> NFT.
-              </p>
-            ) : (
-              <p>
-                You can mint a <strong>PoP</strong> NFT now.
-              </p>
-            )}
-            <button onClick={mint} disabled={loading} className={`mint-button`}>
-              {loading ? "Minting..." : minted ? "Close" : "Mint"}
-            </button>
-          </>
+          <p>
+            You can mint a <strong>PoP</strong> NFT now.
+          </p>
         )}
+        <button onClick={mint} disabled={loading} className={`mint-button`}>
+          {loading ? "Minting..." : minted ? "Close" : "Mint"}
+        </button>
       </Modal>
       <Modal
         ariaHideApp={false}
@@ -619,7 +910,7 @@ function App() {
         }}
       >
         <div style={{ width: 460, borderRadius: 10, overflow: "hidden" }}>
-          <img src={stopImg} alt="" style={{ marginTop: 30, display: 'block', maxWidth: '100%' }} />
+          {/* <img src={stopImg} alt="" style={{ marginTop: 30, display: 'block', maxWidth: '100%' }} />
           <div className="content">
             <h2 className="c_white">We'll be back</h2>
             <p>We are busy updating the event for you and will be back soon.</p>
@@ -629,8 +920,44 @@ function App() {
             >
               Close
             </button>
+          </div> */}
+          <img
+            src={maxImg}
+            alt=""
+            style={{ marginTop: 30, display: "block", maxWidth: "100%" }}
+          />
+          <div className="content">
+            <h2 className="c_white">Maximum number of claims</h2>
+            <p>The NFT issued in this round have been minted. Please stay tuned and join our Discord to get the latest news!</p>
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <a onClick={() => setNoticeOpen(false)} className="button">
+                Close
+              </a>
+              <a href="https://discord.gg/4f43MwcDRS" target="_blank">
+                <button
+                  onClick={() => setNoticeOpen(false)}
+                  className={`mint-button`}
+                >
+                  Join Discord
+                </button>
+              </a>
+            </div>
           </div>
         </div>
+      </Modal>
+      <Modal
+        ariaHideApp={false}
+        isOpen={rateOpen}
+        style={{
+          ...customStyles,
+          content: {
+            ...customStyles.content,
+            backgroundColor: "transparent",
+            textAlign: "center",
+          },
+        }}
+      >
+        <RateView close={() => setRateOpen(false)} />
       </Modal>
       <div
         className="toast"
