@@ -102,7 +102,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
       ).actor : await (
         await martianNFTConnection(identity!)
       ).actor
-      const result: any = curActor.transfer({
+      const result: any = await curActor.transfer({
         to: {
           principal: Principal.fromText(to),
         },
@@ -240,19 +240,21 @@ const Transfer: React.FC<TransferProps> = (props) => {
           ) : (
             <>
               <div className="flex" style={{ alignItems: "center" }}>
-                <img
-                  src={back}
-                  alt=""
-                  style={{ width: 30, height: 30, marginRight: 10 }}
-                  onClick={() => setStep("main")}
-                />
+                <a>
+                  <img
+                    src={back}
+                    alt=""
+                    style={{ width: 30, height: 30, marginRight: 10 }}
+                    onClick={() => setStep("main")}
+                  />
+                </a>
                 <div className="flex-1">
                   <h1 className="c_white">Transfer NFT</h1>
                 </div>
               </div>
 
               <p>
-                NFT is now supported by Yumi marketplace. Please transfer your NFT to you wallet that you used to log into Yumi.
+                NFT is now supported by Yumi marketplace. Please transfer your NFT to you wallet that your used to log into Yumi.
               </p>
               <div className="flex">
                 <div className="flex-1">
@@ -266,7 +268,9 @@ const Transfer: React.FC<TransferProps> = (props) => {
                     }}
                   />
                 </div>
-                <img src={HELP} alt="" style={{ width: 24, height: 24, marginLeft: 10, marginTop: 50 }} onClick={() => setPrincipalHelp(true)} />
+                <a>
+                  <img src={HELP} alt="" style={{ width: 24, height: 24, marginLeft: 10, marginTop: 50 }} onClick={() => setPrincipalHelp(true)} />
+                </a>
               </div>
               {error ? (
                 <p className="mg_t_10" style={{ color: "#FF6363" }}>
@@ -355,7 +359,7 @@ function App() {
     setClaimable(undefined)
     setSelectToken(undefined)
     setUserTokens(undefined)
-    userNFTInfo=[]
+    userNFTInfo = []
     if (isConnected) {
       const img = new Image()
       img.src = minting
@@ -411,7 +415,7 @@ function App() {
       const result: any = await (
         await popNFTConnection(identity)
       ).actor.claimWithWhitelist();
-      getNFTTokens(identity)
+      initNFT(identity)
       getClaimable(identity)
       setMintOpen(false)
       getNFTStatus()
@@ -666,10 +670,8 @@ function App() {
               </p>
               <a className="c_brand" onClick={() => setRateOpen(true)} style={{ textDecoration: 'underline' }}>Volume &gt;</a>
             </div>
-
           ) : null}
         </div>
-
         <div className="flex-1">
           <h1 className="c_white" style={{ marginBottom: 36 }}>
             Prove you’re a real person to mint a <strong>PoP</strong> NFT.
@@ -784,7 +786,6 @@ function App() {
           }
         </div>
       </div>
-
       <Footer />
       <Modal
         ariaHideApp={false}
@@ -792,7 +793,7 @@ function App() {
         contentLabel="Example Modal"
         style={customStyles}
       >
-        <div className="modal-content">
+        {/* <div className="modal-content">
           <h1 className="c_white mg_b_10">Scan using ME App</h1>
           <p>
             1.Go to “Settings -&gt; Experiments -&gt; Proof of Personhood” and
@@ -818,8 +819,8 @@ function App() {
               Close
             </a>
           </p>
-        </div>
-        {/* <div className="modal-content">
+        </div> */}
+        <div className="modal-content">
           <h1 className="c_white">Notice</h1>
           <p className="c_white">The first round is ended. Please wait for the next round.</p>
           <p style={{ textAlign: "center" }}>
@@ -827,7 +828,7 @@ function App() {
               OK
             </a>
           </p>
-        </div> */}
+        </div>
       </Modal>
       <Modal
         ariaHideApp={false}
@@ -848,10 +849,7 @@ function App() {
           identity={identity!}
           transferDone={() => {
             getNFTStatus()
-            setTimeout(() => {
-              initNFT(identity!)
-            }, 2000)
-            
+            initNFT(identity!)
           }}
         />
       </Modal>
