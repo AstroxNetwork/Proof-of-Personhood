@@ -25,10 +25,14 @@ import {
   hasOwnProperty,
   validatePrincipalId,
 } from "./utils"
-import { SignIdentity } from "@dfinity/agent"
+import { ActorSubclass, SignIdentity } from "@dfinity/agent"
 import { Principal } from "@dfinity/principal"
 import { createClient } from "@connect2ic/core"
 import RateView from "./components/Rate"
+import { idlFactory as liveIdl } from './candid/live_detect.idl';
+import { _SERVICE as liveService } from './candid/live_detect';
+import { idlFactory as nftIdl  } from './candid/Pop.did.idl';
+import { _SERVICE as nftService } from './candid/Pop.did';
 
 type Info = {
   claimed: number;
@@ -68,12 +72,13 @@ const prefix = "astrox://human?"
 type TransferProps = {
   userToken: userNFTInfo;
   close: () => void
-  identity: SignIdentity
+  popNftActor: ActorSubclass<nftService>
+  martNftActor: ActorSubclass<nftService>
   fromPrincipal: string
   transferDone: () => void
 }
 const Transfer: React.FC<TransferProps> = (props) => {
-  const { userToken, identity, fromPrincipal, close } = props
+  const { userToken, fromPrincipal, close, popNftActor, martNftActor } = props
   const [step, setStep] = useState<"main" | "transfer" | "success">("main")
   const [disabled, setDisabled] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -97,11 +102,7 @@ const Transfer: React.FC<TransferProps> = (props) => {
   const transferNFT = async (to: string) => {
     try {
       setLoading(true)
-      const curActor = userToken.type === 'pop' ? await (
-        await popNFTConnection(identity!)
-      ).actor : await (
-        await martianNFTConnection(identity!)
-      ).actor
+      const curActor = userToken.type === 'pop' ? await popNftActor : martNftActor
       const result: any = await curActor.transfer({
         to: {
           principal: Principal.fromText(to),
@@ -337,12 +338,15 @@ function App() {
   const { principal, activeProvider, isConnected } = useConnect()
   const [minted, setMinted] = useState(false);
   const [claimable, setClaimable] = useState<undefined | number>()
-  const [identity, setIdentity] = useState<SignIdentity>()
   const [noticeOpen, setNoticeOpen] = useState(false)
+  const [noticeOpen1, setNoticeOpen1] = useState(false)
   const [rateOpen, setRateOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
   const [userTokens, setUserTokens] = useState<undefined | userNFTInfo[]>()
   const [selectToken, setSelectToken] = useState<undefined | userNFTInfo>()
+  const liveActor = useRef<ActorSubclass<liveService>>()
+  const popNftActor = useRef<ActorSubclass<nftService>>()
+  const martNftActor = useRef<ActorSubclass<nftService>>()
   // const [tokenIdentifier, setTokenIdentifier] = useState<string>("")
   // const [nftImg, setNftImg] = useState<string>()
   const [error, setError] = useState("")
@@ -361,23 +365,38 @@ function App() {
     setUserTokens(undefined)
     userNFTInfo = []
     if (isConnected) {
+      console.log('activeProvider', activeProvider)
       const img = new Image()
       img.src = minting
-      // @ts-ignore
-      const curIdentity =
-        activeProvider?.identity ?? activeProvider?.client._identity
-      setIdentity(curIdentity)
-      getNFTTokens(curIdentity)
-      getMartianNFTTokens(curIdentity);
-      getClaimable(curIdentity);
-      checkHumanStatus(curIdentity)
+      init()
+ 
     }
   }, [principal])
 
-  const initNFT = (identity: SignIdentity) => {
+  const init = async () => {
+    const result = await activeProvider?.createActor<liveService>('d2fsh-3qaaa-aaaai-acmkq-cai', liveIdl)
+    // @ts-ignore
+    liveActor.current = result.value
+    const result1 = await activeProvider?.createActor<nftService>('3hzxy-fyaaa-aaaap-aaiiq-cai', nftIdl)
+    // @ts-ignore
+    martNftActor.current = result1.value
+    const result2 = await activeProvider?.createActor<nftService>('xpegl-kaaaa-aaaah-abcrq-cai', nftIdl)
+    // @ts-ignore
+    popNftActor.current = result2.value
+    console.log('liveActor', liveActor.current)
+    console.log('mart',martNftActor.current)
+    console.log('pop',popNftActor.current)
+    // @ts-ignore
+    getNFTTokens()
+    getMartianNFTTokens();
+    getClaimable();
+    checkHumanStatus()
+  }
+
+  const initNFT = () => {
     userNFTInfo = []
-    getNFTTokens(identity)
-    getMartianNFTTokens(identity);
+    getNFTTokens()
+    getMartianNFTTokens();
   }
 
   const tryMint = () => {
@@ -406,17 +425,15 @@ function App() {
     console.log(nftStatus)
     if (nftStatus && nftStatus?.claimed > nftStatus?.available && !minted) return setNoticeOpen(true)
     if (!(claimable && claimable > 0)) return setMintOpen(false)
-    if (loading || !identity) return
+    if (loading) return
     setLoading(true)
     try {
       // const result: any = await (
       //   await popConnection(identity)
       // ).actor.claimNFT(window.location.hostname)
-      const result: any = await (
-        await popNFTConnection(identity)
-      ).actor.claimWithWhitelist();
-      initNFT(identity)
-      getClaimable(identity)
+      const result: any = await popNftActor.current?.claimWithWhitelist();
+      initNFT()
+      getClaimable()
       setMintOpen(false)
       getNFTStatus()
     } catch (error) {
@@ -431,20 +448,15 @@ function App() {
   }
 
   const getNFTStatus = async () => {
-    const supplyResult = await (
-      await popNFTConnection(identity!)
-    ).actor.supply('test')
+    if(!popNftActor.current)return;
+    const supplyResult = await popNftActor.current?.supply('test')
     let claimed, reserve, supply, available;
-    if (hasOwnProperty(supplyResult, 'ok')) {
+    if (hasOwnProperty(supplyResult!, 'ok')) {
       console.log("supplyResult", supplyResult['ok'])
       supply = supplyResult['ok']
     }
-    claimed = await (
-      await popNFTConnection(identity!)
-    ).actor.getNextClaimId();
-    available = await (
-      await popNFTConnection(identity!)
-    ).actor.getSupplyClaim();
+    claimed = await popNftActor.current?.getNextClaimId();
+    available = await popNftActor.current?.getSupplyClaim();
 
     const statusResult: Info = {
       claimed,
@@ -456,10 +468,9 @@ function App() {
     setNftStatus(statusResult)
   }
 
-  const getNFTTokens = async (identity: SignIdentity) => {
-    const tokensResult: any = await (
-      await popNFTConnection(identity!)
-    ).actor.tokens(getAccountId(identity.getPrincipal()))
+  const getNFTTokens = async () => {
+    if(!popNftActor.current) return 
+    const tokensResult: any = await popNftActor.current.tokens(getAccountId(Principal.fromText(principal!) ))
     console.log("token result", tokensResult)
     setLoading(true)
     if (hasOwnProperty(tokensResult, "ok")) {
@@ -491,10 +502,9 @@ function App() {
     }
   }
 
-  const getMartianNFTTokens = async (identity: SignIdentity) => {
-    const tokensResult: any = await (
-      await martianNFTConnection(identity!)
-    ).actor.tokens(getAccountId(identity.getPrincipal()))
+  const getMartianNFTTokens = async () => {
+    if(!martNftActor.current) return;
+    const tokensResult: any = await martNftActor.current.tokens(getAccountId(Principal.fromText(principal!)))
     console.log("martian token result", tokensResult)
     setLoading(true)
     if (hasOwnProperty(tokensResult, "ok")) {
@@ -526,9 +536,8 @@ function App() {
 
   const getMartianUrlByTokenIndex = async (tokenIdentifier: string) => {
     console.log('tokenIdentifier', tokenIdentifier)
-    const nftDataResult: any = await (
-      await martianNFTConnection(identity!)
-    ).actor.metadata(tokenIdentifier)
+    if(!martNftActor.current) return;
+    const nftDataResult: any = await martNftActor.current.metadata(tokenIdentifier)
     console.log('getMartianUrlByTokenIndex result', nftDataResult)
     if (hasOwnProperty(nftDataResult, "ok")) {
       const metadata = nftDataResult["ok"]["nonfungible"]["metadata"][0]
@@ -548,9 +557,8 @@ function App() {
 
   const getPopUrlByTokenIndex = async (tokenIdentifier: string) => {
     console.log("tokenIdentifier", tokenIdentifier)
-    const nftDataResult: any = await (
-      await popNFTConnection(identity!)
-    ).actor.metadata(tokenIdentifier)
+    if(!popNftActor.current) return;
+    const nftDataResult: any = await popNftActor.current.metadata(tokenIdentifier)
     if (hasOwnProperty(nftDataResult, "ok")) {
       console.log("nftDataResult", nftDataResult)
       const metadata = nftDataResult["ok"]["nonfungible"]["metadata"][0]
@@ -566,19 +574,17 @@ function App() {
     }
   }
 
-  const getClaimable = async (identity: SignIdentity) => {
-    const result = await (
-      await popNFTConnection(identity!)
-    ).actor.getClaimable(identity.getPrincipal());
+  const getClaimable = async () => {
+    if(!popNftActor.current )return;
+    const result = await popNftActor.current.getClaimable(Principal.fromText(principal!));
     console.log('claim ', result)
     setClaimable(Number(result))
   }
 
-  const checkHumanStatus = async (identity: SignIdentity) => {
+  const checkHumanStatus = async () => {
+    if(!popNftActor.current )return;
     const scope = prefix + qs.stringify(params)
-    const result: any = await (
-      await popConnection(identity!)
-    ).actor.get_token(scope)
+    const result: any = await liveActor.current?.get_token(scope)
     console.log("checkHumanStatus token result", result)
     if (result.Ok && result.Ok.active) {
       clearInterval(timer)
@@ -599,9 +605,7 @@ function App() {
     // }, 4000)
     clearInterval(timer)
     timer = setInterval(async () => {
-      const result: any = await (
-        await popConnection(identity!)
-      ).actor.get_token(scope)
+      const result: any = await liveActor.current?.get_token(scope)
       console.log(result)
       if (result.Ok && result.Ok.active) {
         //verify
@@ -789,6 +793,24 @@ function App() {
       <Footer />
       <Modal
         ariaHideApp={false}
+        isOpen={noticeOpen1}
+        contentLabel="Example Modal"
+        style={customStyles}
+      >
+        <div className="modal-content">
+          <h1 className="c_white">Notice</h1>
+          <p className="c_white">We are upgrading now. Therefore login with ME wallet is temporarily unavailable. Your NFTs still remain safe in your wallet.
+            Please stay tuned with our latest announcement and we will be back soon.</p>
+          <p style={{ textAlign: "center" }}>
+            <a onClick={() => setNoticeOpen1(false)} className="button">
+              OK
+            </a>
+          </p>
+        </div>
+      </Modal>
+
+      <Modal
+        ariaHideApp={false}
         isOpen={open}
         contentLabel="Example Modal"
         style={customStyles}
@@ -846,10 +868,11 @@ function App() {
           close={() => setTransferOpen(false)}
           userToken={selectToken!}
           fromPrincipal={principal!}
-          identity={identity!}
+          popNftActor={popNftActor.current!}
+          martNftActor={martNftActor.current!}
           transferDone={() => {
             getNFTStatus()
-            initNFT(identity!)
+            initNFT()
           }}
         />
       </Modal>
@@ -976,11 +999,15 @@ const client = createClient({
   providers: [
     new InternetIdentity(),
     new AstroX({
-      providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app",
+      // providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app",
+      providerUrl: "http://localhost:8080",
+      noUnify: true,
     }),
   ],
   canisters: {},
-  globalProviderConfig: {},
+  globalProviderConfig: {
+    whitelist: ['xpegl-kaaaa-aaaah-abcrq-cai', '3hzxy-fyaaa-aaaap-aaiiq-cai', 'd2fsh-3qaaa-aaaai-acmkq-cai'],
+  },
 })
 
 export default () => (

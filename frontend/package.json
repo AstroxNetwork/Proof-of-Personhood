@@ -10,8 +10,8 @@
     "gen:live_detect:js": "didc bind ../canister/live_detect.did -t js > ./src/candid/live_detect.idl.js"
   },
   "dependencies": {
-    "@connect2ic/core": "^0.1.0",
-    "@connect2ic/react": "^0.1.0",
+    "@connect2ic/core": "0.2.0-beta.15",
+    "@connect2ic/react": "0.2.0-beta.15",
     "@dfinity/agent": "^0.12.0",
     "@dfinity/auth-client": "^0.12.0",
     "@dfinity/authentication": "^0.12.0",
