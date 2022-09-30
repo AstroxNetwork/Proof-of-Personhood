@@ -364,14 +364,14 @@ function App() {
     setSelectToken(undefined)
     setUserTokens(undefined)
     userNFTInfo = []
-    if (isConnected) {
+    if (isConnected && activeProvider) {
       console.log('activeProvider', activeProvider)
       const img = new Image()
       img.src = minting
       init()
  
     }
-  }, [principal])
+  }, [principal, activeProvider])
 
   const init = async () => {
     const result = await activeProvider?.createActor<liveService>('d2fsh-3qaaa-aaaai-acmkq-cai', liveIdl)
@@ -387,10 +387,12 @@ function App() {
     console.log('mart',martNftActor.current)
     console.log('pop',popNftActor.current)
     // @ts-ignore
-    getNFTTokens()
-    getMartianNFTTokens();
-    getClaimable();
-    checkHumanStatus()
+    setTimeout(() => {
+      getNFTTokens()
+      getMartianNFTTokens();
+      getClaimable();
+      checkHumanStatus()
+    }, 100)
   }
 
   const initNFT = () => {
@@ -630,7 +632,7 @@ function App() {
           <a
             className="connect-button"
             style={{ width: 230 }}
-            href="https://astroxme.s3.ap-southeast-1.amazonaws.com/pop_o3hfl_me_plus_v1.0.0%2B4_202207052356.apk"
+            href="https://astroxmehk.s3.ap-east-1.amazonaws.com/SEALED_pop_o3hfl_me_plus_v1.1.3%2B13_202209262116.apk"
             target="_blank"
           >
             Download Demo App
@@ -1000,7 +1002,7 @@ const client = createClient({
     new InternetIdentity(),
     new AstroX({
       // providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app",
-      providerUrl: "http://localhost:8080",
+      // providerUrl: "http://localhost:8080",
       noUnify: true,
     }),
   ],
