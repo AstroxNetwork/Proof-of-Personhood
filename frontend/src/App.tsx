@@ -632,7 +632,7 @@ function App() {
           <a
             className="connect-button"
             style={{ width: 230 }}
-            href="https://astroxmehk.s3.ap-east-1.amazonaws.com/SEALED_pop_o3hfl_me_plus_v1.1.3%2B13_202209262116.apk"
+            href="https://astroxmehk.s3.ap-east-1.amazonaws.com/SEALED_pop_o3hfl_me_plus_v1.2.1%2B21_202212012344.apk"
             target="_blank"
           >
             Download Demo App
@@ -1002,7 +1002,7 @@ const client = createClient({
     new InternetIdentity(),
     new AstroX({
       // providerUrl: "https://63k2f-nyaaa-aaaah-aakla-cai.raw.ic0.app",
-      // providerUrl: "http://localhost:8080",
+      providerUrl: "http://localhost:8080",
       noUnify: true,
     }),
   ],
